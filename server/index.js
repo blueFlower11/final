@@ -1,57 +1,101 @@
-const path = require('path');
-const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const bodyParser = require('body-parser');
-const gameRouter = require('./routes/game');
-const cors = require('cors');
+const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
 
-app.use(bodyParser.json());
+const allowedOrigins = [
+    process.env.CLIENT_URL,
+    "http://localhost:5173"
+];
 
-app.use(cors({
-    origin: [
-      "http://localhost:5173", // Vite dev
-      "https://your-vercel-domain.vercel.app" // replace with Vercel domain
-    ],
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
     credentials: true,
+  },
+});
+
+app.use(express.json());
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
+
+let games = {};
+
+app.get("/api/game/history", (req, res) => {
+  const history = Object.values(games).map((g) => ({
+    id: g.id,
+    players: g.players,
+    winner: g.winner,
   }));
+  res.json(history);
+});
 
-const sessions = new Map();
+app.post("/api/game/ai-move", (req, res) => {
+  const { board } = req.body;
+  const empty = board
+    .map((v, i) => (v ? null : i))
+    .filter((v) => v !== null);
+  const move = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
+  res.json({ move });
+});
 
-io.on('connection', (socket) => {
-  console.log('socket connected', socket.id);
-  socket.on('join', ({ sessionId, player }) => {
-    socket.join(sessionId);
-    if (!sessions.has(sessionId)) sessions.set(sessionId, Array(9).fill(null));
-    console.log(`player ${player} joined ${sessionId}`);
-    io.to(socket.id).emit('board', sessions.get(sessionId));
+io.on("connection", (socket) => {
+  console.log("User connected:", socket.id);
+
+  socket.on("joinGame", (gameId) => {
+    socket.join(gameId);
+    if (!games[gameId]) {
+      games[gameId] = { id: gameId, board: Array(9).fill(null), players: [], winner: null };
+    }
+    if (games[gameId].players.length < 2 && !games[gameId].players.includes(socket.id)) {
+      games[gameId].players.push(socket.id);
+    }
   });
 
-  socket.on('move', ({ sessionId, player, index }) => {
-    const board = sessions.get(sessionId) || Array(9).fill(null);
-    if (board[index]) return; 
-    board[index] = player;
-    sessions.set(sessionId, board);
-    io.to(sessionId).emit('board', board);
+  socket.on("makeMove", ({ gameId, index, player }) => {
+    const game = games[gameId];
+    if (!game || game.board[index] || game.winner) return;
+    game.board[index] = player;
+
+    const winner = checkWinner(game.board);
+    if (winner) {
+      game.winner = winner;
+    }
+
+    io.to(gameId).emit("moveMade", { index, player, board: game.board, winner: game.winner });
   });
 
-  socket.on('disconnect', () => {
+  socket.on("disconnect", () => {
+    console.log("User disconnected:", socket.id);
   });
 });
 
-app.use('/api/game', gameRouter);
-
-if (process.env.NODE_ENV === 'production') {
-  const clientBuild = path.join(__dirname, '..', 'client', 'dist');
-  app.use(express.static(clientBuild));
-  app.get('*', (req, res) => res.sendFile(path.join(clientBuild, 'index.html')));
+function checkWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6],
+  ];
+  for (let [a, b, c] of lines) {
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
 }
 
-const PORT = process.env.PORT || 4000;
-server.listen(PORT, () => console.log(`Server listening on ${PORT}`));
-
-module.exports = { io, sessions };
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
