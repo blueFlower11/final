@@ -11,19 +11,19 @@ const allowedOrigins = [
     "http://localhost:5173"
 ];
 
-const io = new Server(server, {
-  cors: {
-    origin: allowedOrigins,
-    methods: ["GET", "POST"],
-    credentials: true,
-  },
-});
+const io = new Server(server, { cors: {} });
+//   cors: {
+//     origin: allowedOrigins,
+//     methods: ["GET", "POST"],
+//     credentials: true,
+//   },
+// });
 
 app.use(express.json());
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-}));
+app.use(cors());
+//   origin: allowedOrigins,
+//   credentials: true,
+// }));
 
 let games = {};
 
