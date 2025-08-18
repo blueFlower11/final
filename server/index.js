@@ -38,7 +38,8 @@ app.get("/api/game/history", (req, res) => {
 
 app.post("/api/game/ai-move", (req, res) => {
   const { board } = req.body;
-  const empty = board
+  const boardArray = Array.from(board.replace(/\|/g, '').split('').map(v => v === ' ' ? null : v));
+  const empty = boardArray
     .map((v, i) => (v ? null : i))
     .filter((v) => v !== null);
   const move = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
