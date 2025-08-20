@@ -32,6 +32,9 @@ const Smart = sequelize.define("smart", {
   p20: { type: DataTypes.INTEGER, defaultValue: 1 },
   p21: { type: DataTypes.INTEGER, defaultValue: 1 },
   p22: { type: DataTypes.INTEGER, defaultValue: 1 },
+}, {
+    tableName: "smart",
+    timestamps: true
 });
 
 const Stupid = sequelize.define("stupid", {
@@ -46,6 +49,9 @@ const Stupid = sequelize.define("stupid", {
   p20: { type: DataTypes.INTEGER, defaultValue: 1 },
   p21: { type: DataTypes.INTEGER, defaultValue: 1 },
   p22: { type: DataTypes.INTEGER, defaultValue: 1 },
+}, {
+    tableName: "stupid",
+    timestamps: true
 });
 
 module.exports = { Smart, Stupid };
