@@ -13,8 +13,6 @@ const Boards = sequelize.define("Boards", {
     p20: { type: DataTypes.INTEGER, defaultValue: 1 },
     p21: { type: DataTypes.INTEGER, defaultValue: 1 },
     p22: { type: DataTypes.INTEGER, defaultValue: 1 },
-    win: { type: DataTypes.INTEGER, defaultValue: 0 },
-    lose: { type: DataTypes.INTEGER, defaultValue: 0 },
   });
   
   module.exports = Boards;
