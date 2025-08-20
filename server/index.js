@@ -3,6 +3,8 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
+const Boards = require("./boards");
+
 const app = express();
 const server = http.createServer(app);
 
@@ -36,14 +38,103 @@ app.get("/api/game/history", (req, res) => {
   res.json(history);
 });
 
-app.post("/api/game/ai-move", (req, res) => {
-  const { board } = req.body;
-  const boardArray = Array.from(board.replace(/\|/g, '').split('').map(v => v === ' ' ? null : v));
-  const empty = boardArray
-    .map((v, i) => (v ? null : i))
-    .filter((v) => v !== null);
-  const move = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
-  res.json({ move });
+// app.post("/api/game/ai-move", (req, res) => {
+//   const { board } = req.body;
+//   const boardArray = Array.from(board.replace(/\|/g, '').split('').map(v => v === ' ' ? null : v));
+//   const empty = boardArray
+//     .map((v, i) => (v ? null : i))
+//     .filter((v) => v !== null);
+//   const move = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
+//   res.json({ move });
+// });
+
+app.post("/api/game/ai-move", async (req, res) => {
+  try {
+    const { board, step } = req.body;
+
+    // normalize board string like Java code did
+    const normalized = "|" + board.replace(/\|/g, "") + "|";
+
+    // find matching boards in DB
+    const dbBoards = await Boards.findAll({ where: { step } });
+
+    let chosenBoard = null;
+    let chosenMove = null;
+
+    for (let b of dbBoards) {
+      if (b.board === normalized) {
+        // collect "beads"
+        const beads = [];
+        Object.entries({
+          0: b.p00,
+          1: b.p01,
+          2: b.p02,
+          3: b.p10,
+          4: b.p11,
+          5: b.p12,
+          6: b.p20,
+          7: b.p21,
+          8: b.p22,
+        }).forEach(([pos, count]) => {
+          for (let i = 0; i < count; i++) beads.push(Number(pos));
+        });
+
+        // random weighted choice
+        if (beads.length > 0) {
+          const move = beads[Math.floor(Math.random() * beads.length)];
+          chosenBoard = b;
+          chosenMove = move;
+          break;
+        }
+      }
+    }
+
+    if (!chosenMove) {
+      // fallback = random empty
+      const boardArray = Array.from(board.replace(/\|/g, "").split("").map(v => v === " " ? null : v));
+      const empty = boardArray.map((v, i) => (v ? null : i)).filter(v => v !== null);
+      chosenMove = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
+    }
+
+    res.json({ move: chosenMove, boardId: chosenBoard?.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "AI move failed" });
+  }
+});
+
+app.post("/api/game/ai-update", async (req, res) => {
+  try {
+    const { moves, winner } = req.body; 
+    // moves = [{ boardId, pos }]
+    
+    for (let { boardId, pos } of moves) {
+      const board = await Boards.findByPk(boardId);
+      if (!board) continue;
+
+      const win = winner === "AI";
+      const tie = winner === null;
+
+      // adjust beads like in Java code
+      const field = ["p00","p01","p02","p10","p11","p12","p20","p21","p22"][pos];
+      if (win) {
+        board[field] += 2;
+        board.win++;
+      } else if (tie) {
+        board[field] += 1;
+      } else {
+        board[field] = Math.max(0, board[field] - 1);
+        board.lose++;
+      }
+
+      await board.save();
+    }
+
+    res.json({ status: "updated" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update AI" });
+  }
 });
 
 io.on("connection", (socket) => {
