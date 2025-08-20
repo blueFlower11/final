@@ -50,7 +50,6 @@ const commonFields = {
 const modelOptions = (tableName) => ({
   tableName,
   timestamps: false,
-  underscored: false,
   freezeTableName: true,
 });
 

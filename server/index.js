@@ -4,7 +4,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 
 const { Op } = require('sequelize');
-const { Smart, Stupid } = require("./boards");
+const { Smart, Stupid } = require("./db");
 
 const app = express();
 const server = http.createServer(app);
