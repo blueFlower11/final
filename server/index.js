@@ -3,6 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
+const { Op } = require('sequelize');
 const { Smart, Stupid } = require("./boards");
 
 const app = express();
@@ -105,6 +106,107 @@ app.post("/api/game/ai-move", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "AI move failed" });
+  }
+});
+
+function rowBeadsToArray(row) {
+  return [
+    row.p00, row.p01, row.p02,
+    row.p10, row.p11, row.p12,
+    row.p20, row.p21, row.p22,
+  ];
+}
+
+function weightedPick(weights) {
+  const total = weights.reduce((a,b) => a + b, 0);
+  if (total <= 0) return -1; // no legal moves (all zero)
+  const r = Math.random() * total;
+  let acc = 0;
+  for (let i = 0; i < weights.length; i++) {
+    acc += weights[i];
+    if (r < acc) return i;
+  }
+  return weights.length - 1; // fallback
+}
+
+function getModel(table) {
+  if (!table || table === 'smart') return Smart;
+  if (table === 'stupid') return Stupid;
+  throw new Error('Unknown table; use "smart" or "stupid"');
+}
+
+app.post('/move', async (req, res) => {
+  try {
+    const { board, step, table } = req.body;
+    if (step == null) return res.status(400).json({ error: 'Missing step' });
+    const boardStr = normalizeBoardToString(board);
+    const Model = getModel(table);
+
+    // Generate all symmetry variants of the incoming board
+    const transformedBoards = TRANSFORMS_WITH_INV.map(t => ({
+      ...t,
+      boardStr: applyTransform(boardStr, t.map),
+    }));
+
+    // Try to find a DB row whose `board` matches any of these (and step matches)
+    const candidates = await Model.findAll({
+      where: {
+        step,
+        board: {
+          [Op.in]: transformedBoards.map(t => t.boardStr),
+        },
+      },
+      limit: 8,
+    });
+
+    if (!candidates.length) {
+      return res.status(404).json({
+        error: 'No matching board found in DB for any symmetry',
+        tried: transformedBoards.map(t => t.boardStr),
+      });
+    }
+
+    // Pick the first match, but record which symmetry matched it
+    // (If you’d rather prefer a canonical order, you can sort candidates by id or bead sum)
+    const match = (() => {
+      for (const t of transformedBoards) {
+        const row = candidates.find(r => r.board === t.boardStr);
+        if (row) return { row, transform: t };
+      }
+      return null;
+    })();
+
+    if (!match) {
+      return res.status(500).json({ error: 'Internal: could not align match to transform' });
+    }
+
+    const { row, transform } = match;
+    const beads = rowBeadsToArray(row); // beads for the matched orientation
+
+    // Choose a DB position with probability proportional to bead count
+    const dbPosition = weightedPick(beads);
+    if (dbPosition < 0) {
+      return res.status(409).json({
+        error: 'No legal moves: all bead counts are zero for this board',
+        boardId: row.id,
+        transform: transform.name,
+      });
+    }
+
+    // Map DB position back to the ORIGINAL request orientation
+    // transform.inv maps "matched orientation index" -> "original orientation index"
+    const moveIndex = transform.inv[dbPosition];
+
+    return res.json({
+      moveIndex,              // index 0..8 on the ORIGINAL input board
+      boardId: row.id,        // which DB row was used
+      dbPosition,             // which index 0..8 was picked in the matched DB orientation
+      transform: transform.name,
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Server error', detail: String(err.message || err) });
   }
 });
 
