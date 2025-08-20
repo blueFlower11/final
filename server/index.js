@@ -3,7 +3,7 @@ const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
 
-const Boards = require("./boards");
+const { Smart, Stupid } = require("./boards");
 
 const app = express();
 const server = http.createServer(app);
@@ -29,6 +29,10 @@ app.use(cors());
 
 let games = {};
 
+function getBoardModel(type) {
+  return type === "stupid" ? Stupid : Smart; // default = Smart
+}
+
 app.get("/api/game/history", (req, res) => {
   const history = Object.values(games).map((g) => ({
     id: g.id,
@@ -50,7 +54,8 @@ app.get("/api/game/history", (req, res) => {
 
 app.post("/api/game/ai-move", async (req, res) => {
   try {
-    const { board, step } = req.body;
+    const { board, step, type } = req.body;
+    const Boards = getBoardModel(type);
 
     // normalize board string like Java code did
     const normalized = "|" + board.replace(/\|/g, "") + "|";
@@ -106,6 +111,7 @@ app.post("/api/game/ai-move", async (req, res) => {
 app.post("/api/game/ai-update", async (req, res) => {
   try {
     const { moves, winner } = req.body; 
+    const Boards = getBoardModel("smart");
     // moves = [{ boardId, pos }]
     
     for (let { boardId, pos } of moves) {
