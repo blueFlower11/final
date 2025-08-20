@@ -6,6 +6,12 @@ const cors = require("cors");
 const { Op } = require('sequelize');
 const { Smart, Stupid } = require("./db");
 
+const {
+  TRANSFORMS_WITH_INV,
+  normalizeBoardToString,
+  applyTransform,
+} = require('./boards');
+
 const app = express();
 const server = http.createServer(app);
 
