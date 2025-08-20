@@ -1,18 +1,20 @@
 const { DataTypes } = require("sequelize");
-const sequelize = require("./db"); // your db connection
+const sequelize = require("./db");
 
 const Boards = sequelize.define("Boards", {
-  step: DataTypes.INTEGER,
-  board: DataTypes.STRING,
-  p00: DataTypes.INTEGER,
-  p01: DataTypes.INTEGER,
-  p02: DataTypes.INTEGER,
-  p10: DataTypes.INTEGER,
-  p11: DataTypes.INTEGER,
-  p12: DataTypes.INTEGER,
-  p20: DataTypes.INTEGER,
-  p21: DataTypes.INTEGER,
-  p22: DataTypes.INTEGER,
-  win: DataTypes.INTEGER,
-  lose: DataTypes.INTEGER
-});
+    step: { type: DataTypes.INTEGER },
+    board: { type: DataTypes.STRING },
+    p00: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p01: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p02: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p10: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p11: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p12: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p20: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p21: { type: DataTypes.INTEGER, defaultValue: 1 },
+    p22: { type: DataTypes.INTEGER, defaultValue: 1 },
+    win: { type: DataTypes.INTEGER, defaultValue: 0 },
+    lose: { type: DataTypes.INTEGER, defaultValue: 0 },
+  });
+  
+  module.exports = Boards;
