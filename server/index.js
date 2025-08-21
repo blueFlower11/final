@@ -241,7 +241,7 @@ app.post('/move', async (req, res) => {
     }
 
     // Map back to original orientation
-    const moveIndex = transform.inv[dbPosition];
+    const moveIndex = transform.map[dbPosition];
 
     return res.json({
       moveIndex,               // 0..8 index on original request board
