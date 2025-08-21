@@ -10,6 +10,8 @@ const {
   TRANSFORMS_WITH_INV,
   normalizeBoardToString,
   applyTransform,
+  wrapWithPipes,
+  unwrapPipes,
 } = require('./boards');
 
 const app = express();
@@ -141,73 +143,113 @@ function getModel(table) {
   throw new Error('Unknown table; use "smart" or "stupid"');
 }
 
+function countFilled(inner9) {
+  let n = 0;
+  for (const c of inner9) if (c === 'X' || c === 'O') n++;
+  return n;
+}
+
+// 🚀 POST /move
 app.post('/move', async (req, res) => {
   try {
     const { board, step, table } = req.body;
-    if (step == null) return res.status(400).json({ error: 'Missing step' });
-    const boardStr = normalizeBoardToString(board);
     const Model = getModel(table);
 
-    // Generate all symmetry variants of the incoming board
-    const transformedBoards = TRANSFORMS_WITH_INV.map(t => ({
+    // Normalize input -> inner 9 chars "X/O/ " (no pipes)
+    const inner = normalizeBoardToString(board);
+
+    // Generate all symmetry variants (inner form)
+    const transformedInner = TRANSFORMS_WITH_INV.map(t => ({
       ...t,
-      boardStr: applyTransform(boardStr, t.map),
+      boardStr: applyTransform(inner, t.map),
     }));
 
-    // Try to find a DB row whose `board` matches any of these (and step matches)
-    const candidates = await Model.findAll({
-      where: {
-        step,
-        board: {
-          [Op.in]: transformedBoards.map(t => t.boardStr),
-        },
-      },
-      limit: 8,
-    });
+    // Wrap each with pipes for DB query
+    const wrappedBoards = transformedInner.map(t => wrapWithPipes(t.boardStr));
 
+    // Compute possible step values
+    const filled = countFilled(inner);
+    const stepsToTry = Array.from(new Set([
+      step,
+      filled,
+      filled + 1,
+      Math.max(filled - 1, 0),
+    ].filter(s => Number.isInteger(s) && s >= 0)));
+
+    // Query DB with different steps
+    let candidates = [];
+    let usedStep = null;
+    for (const st of stepsToTry) {
+      const found = await Model.findAll({
+        where: {
+          step: st,
+          board: { [Op.in]: wrappedBoards },
+        },
+        limit: 8,
+      });
+      if (found.length) {
+        candidates = found;
+        usedStep = st;
+        break;
+      }
+    }
+
+    // Step-agnostic fallback for diagnostics
     if (!candidates.length) {
+      const stepAgnostic = await Model.findAll({
+        where: { board: { [Op.in]: wrappedBoards } },
+        attributes: ['id', 'board', 'step'],
+        limit: 8,
+      });
       return res.status(404).json({
         error: 'No matching board found in DB for any symmetry',
-        tried: transformedBoards.map(t => t.boardStr),
+        tried: wrappedBoards,
+        hint: stepAgnostic.length
+          ? 'Board exists in DB but with a different step.'
+          : 'Encoding mismatch: DB uses pipes and spaces as blanks.',
+        foundExamples: stepAgnostic,
       });
     }
 
-    // Pick the first match, but record which symmetry matched it
-    // (If you’d rather prefer a canonical order, you can sort candidates by id or bead sum)
-    const match = (() => {
-      for (const t of transformedBoards) {
-        const row = candidates.find(r => r.board === t.boardStr);
-        if (row) return { row, transform: t };
-      }
-      return null;
-    })();
-
+    // Find which transform matched
+    let match = null;
+    for (const t of transformedInner) {
+      const wrapped = wrapWithPipes(t.boardStr);
+      const row = candidates.find(r => r.board === wrapped);
+      if (row) { match = { row, transform: t, wrappedBoard: wrapped }; break; }
+    }
     if (!match) {
-      return res.status(500).json({ error: 'Internal: could not align match to transform' });
+      return res.status(500).json({ error: 'Internal: matched rows but failed to align transform' });
     }
 
     const { row, transform } = match;
-    const beads = rowBeadsToArray(row); // beads for the matched orientation
 
-    // Choose a DB position with probability proportional to bead count
+    // Legal moves mask: only empty spaces
+    const legalMask = transform.boardStr.split('').map(c => (c === ' ' ? 1 : 0));
+
+    // Beads array from row, apply mask
+    const beads = rowBeadsToArray(row).map((w, i) => (legalMask[i] ? w : 0));
+
+    // Weighted random pick
     const dbPosition = weightedPick(beads);
     if (dbPosition < 0) {
       return res.status(409).json({
-        error: 'No legal moves: all bead counts are zero for this board',
+        error: 'No legal moves: all bead counts are zero',
         boardId: row.id,
         transform: transform.name,
       });
     }
 
-    // Map DB position back to the ORIGINAL request orientation
-    // transform.inv maps "matched orientation index" -> "original orientation index"
+    // Map back to original orientation
     const moveIndex = transform.inv[dbPosition];
 
     return res.json({
-      moveIndex,              // index 0..8 on the ORIGINAL input board
-      boardId: row.id,        // which DB row was used
-      dbPosition,             // which index 0..8 was picked in the matched DB orientation
+      moveIndex,               // 0..8 index on original request board
+      boardId: row.id,         // DB row id
+      dbPosition,              // index chosen in matched orientation
       transform: transform.name,
+      usedStep,                // which step value matched
+      matchedBoard: wrapWithPipes(transform.boardStr), // what DB board matched
     });
 
   } catch (err) {
@@ -215,6 +257,81 @@ app.post('/move', async (req, res) => {
     return res.status(500).json({ error: 'Server error', detail: String(err.message || err) });
   }
 });
+
+// app.post('/move', async (req, res) => {
+//   try {
+//     const { board, step, table } = req.body;
+//     if (step == null) return res.status(400).json({ error: 'Missing step' });
+//     const boardStr = normalizeBoardToString(board);
+//     const Model = getModel(table);
+
+//     // Generate all symmetry variants of the incoming board
+//     const transformedBoards = TRANSFORMS_WITH_INV.map(t => ({
+//       ...t,
+//       boardStr: applyTransform(boardStr, t.map),
+//     }));
+
+//     // Try to find a DB row whose `board` matches any of these (and step matches)
+//     const candidates = await Model.findAll({
+//       where: {
+//         step,
+//         board: {
+//           [Op.in]: transformedBoards.map(t => t.boardStr),
+//         },
+//       },
+//       limit: 8,
+//     });
+
+//     if (!candidates.length) {
+//       return res.status(404).json({
+//         error: 'No matching board found in DB for any symmetry',
+//         tried: transformedBoards.map(t => t.boardStr),
+//       });
+//     }
+
+//     // Pick the first match, but record which symmetry matched it
+//     // (If you’d rather prefer a canonical order, you can sort candidates by id or bead sum)
+//     const match = (() => {
+//       for (const t of transformedBoards) {
+//         const row = candidates.find(r => r.board === t.boardStr);
+//         if (row) return { row, transform: t };
+//       }
+//       return null;
+//     })();
+
+//     if (!match) {
+//       return res.status(500).json({ error: 'Internal: could not align match to transform' });
+//     }
+
+//     const { row, transform } = match;
+//     const beads = rowBeadsToArray(row); // beads for the matched orientation
+
+//     // Choose a DB position with probability proportional to bead count
+//     const dbPosition = weightedPick(beads);
+//     if (dbPosition < 0) {
+//       return res.status(409).json({
+//         error: 'No legal moves: all bead counts are zero for this board',
+//         boardId: row.id,
+//         transform: transform.name,
+//       });
+//     }
+
+//     // Map DB position back to the ORIGINAL request orientation
+//     // transform.inv maps "matched orientation index" -> "original orientation index"
+//     const moveIndex = transform.inv[dbPosition];
+
+//     return res.json({
+//       moveIndex,              // index 0..8 on the ORIGINAL input board
+//       boardId: row.id,        // which DB row was used
+//       dbPosition,             // which index 0..8 was picked in the matched DB orientation
+//       transform: transform.name,
+//     });
+
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ error: 'Server error', detail: String(err.message || err) });
+//   }
+// });
 
 app.post("/api/game/ai-update", async (req, res) => {
   try {

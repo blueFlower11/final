@@ -113,8 +113,23 @@ function applyTransform(boardStr, map) {
   return out.join('');
 }
 
-module.exports = {
-  TRANSFORMS_WITH_INV,
-  normalizeBoardToString,
-  applyTransform,
-};
+function wrapWithPipes(inner9) {
+    if (inner9.length !== 9) throw new Error('wrapWithPipes expects 9-char inner board');
+    return `|${inner9}|`;
+  }
+  
+  function unwrapPipes(possiblyWrapped) {
+    // Accepts "|.........|" or "........."
+    if (possiblyWrapped.length === 11 && possiblyWrapped.startsWith('|') && possiblyWrapped.endsWith('|')) {
+      return possiblyWrapped.slice(1, -1);
+    }
+    return possiblyWrapped;
+  }
+  
+  module.exports = {
+    TRANSFORMS_WITH_INV,
+    normalizeBoardToString,
+    applyTransform,
+    wrapWithPipes,
+    unwrapPipes,
+  };
