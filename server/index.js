@@ -78,7 +78,7 @@ app.post('/move', async (req, res) => {
     const { board, step, table } = req.body;
     const Model = getModel(table);
 
-    const inner = normalizeBoardToString(board);
+    const inner = normalizeBoardToString(unwrapPipes(board));
 
     const transformedInner = TRANSFORMS_WITH_INV.map(t => ({
       ...t,
