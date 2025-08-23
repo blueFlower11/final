@@ -3,6 +3,12 @@ import { API_BASE, ENDPOINT_LEARNING, ENDPOINT_STATIC, ENDPOINT_SAVE } from "./c
 export type Cell = "X" | "O" | null;
 export type Board = Cell[];
 
+function toPipeBoard(board: Board): string {
+  // convert array of 9 cells into a single string with pipes around it
+  const s = board.map(c => (c ? c : " ")).join("");
+  return `|${s}|`;
+}
+
 export async function requestBotMove({
   board,
   player,
@@ -17,7 +23,7 @@ export async function requestBotMove({
     const res = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ board, player }),
+      body: JSON.stringify({ toPipeBoard(board), player }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
