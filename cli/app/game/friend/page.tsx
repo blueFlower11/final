@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Board, type Cell } from "@/components/Board";
 import { getSocket } from "@/lib/socket";
 import { QRBlock } from "@/components/QRBlock";
@@ -10,11 +10,6 @@ function genRoom() {
   return Math.random().toString(36).slice(2, 8);
 }
 
-function useQuery() {
-  const qs = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
-  return (key: string) => qs?.get(key) ?? null;
-}
-
 export default function FriendGame() {
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [turn, setTurn] = useState<"X"|"O">("X");
@@ -22,33 +17,49 @@ export default function FriendGame() {
   const [draw, setDraw] = useState(false);
   const [connected, setConnected] = useState(false);
 
-  const getQ = useQuery();
-  const [room, setRoom] = useState<string>(() => getQ("room") || genRoom());
-  const [role, setRole] = useState<"X"|"O"|"spectator">(() => (getQ("as") === "X" || getQ("as") === "O") ? (getQ("as") as "X"|"O") : "spectator");
+  // URL/role are derived client-side only (avoid window during SSR)
+  const [room, setRoom] = useState<string>("");
+  const [role, setRole] = useState<"X"|"O"|"spectator">("spectator");
+  const [currentUrl, setCurrentUrl] = useState<string>("");
 
   const socketRef = useRef<any>(null);
 
+  // Client-only initialization
   useEffect(() => {
-    const url = new URL(window.location.href);
-    if (!url.searchParams.get("room")) {
-      url.searchParams.set("room", room);
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [room]);
+    if (typeof window === "undefined") return;
+    setCurrentUrl(window.location.href);
 
+    const qs = new URLSearchParams(window.location.search);
+    const qRoom = qs.get("room");
+    const qRole = qs.get("as");
+    const initialRoom = qRoom || genRoom();
+    setRoom(initialRoom);
+    if (qRole === "X" || qRole === "O") setRole(qRole);
+    // Ensure URL has room persisted
+    if (!qRoom) {
+      const url = new URL(window.location.href);
+      url.searchParams.set("room", initialRoom);
+      window.history.replaceState({}, "", url.toString());
+      setCurrentUrl(url.toString());
+    }
+  }, []);
+
+  // Socket wiring
   useEffect(() => {
+    if (!room) return; // wait until client has set a room
     const socket = getSocket();
     socketRef.current = socket;
     socket.on("connect", () => setConnected(true));
     socket.emit("join", { room, role });
-    socket.on("state", (payload: {board: Cell[]; turn: "X"|"O"; winner?: "X"|"O"|null; draw?: boolean;}) => {
+    const onState = (payload: {board: Cell[]; turn: "X"|"O"; winner?: "X"|"O"|null; draw?: boolean;}) => {
       setBoard(payload.board);
       setTurn(payload.turn);
       setWinner(payload.winner ?? null);
       setDraw(!!payload.draw);
-    });
+    };
+    socket.on("state", onState);
     return () => {
-      socket.off("state");
+      socket.off("state", onState);
     };
   }, [room, role]);
 
@@ -59,25 +70,28 @@ export default function FriendGame() {
     socketRef.current?.emit("move", { room, index: i, symbol: role });
   }
 
-  const joinUrlX = useMemo(() => {
-    const u = new URL(window.location.href);
+  // Build join links on client only
+  const joinUrlX = (() => {
+    if (!currentUrl || !room) return "";
+    const u = new URL(currentUrl);
     u.searchParams.set("room", room);
     u.searchParams.set("as", "X");
     return u.toString();
-  }, [room]);
+  })();
 
-  const joinUrlO = useMemo(() => {
-    const u = new URL(window.location.href);
+  const joinUrlO = (() => {
+    if (!currentUrl || !room) return "";
+    const u = new URL(currentUrl);
     u.searchParams.set("room", room);
     u.searchParams.set("as", "O");
     return u.toString();
-  }, [room]);
+  })();
 
   const isSpectator = role === "spectator";
-  const header = isSpectator ? "Spectator board (play from phones)" : `You are ${role}`;
 
   const [isMobile, setIsMobile] = useState(false);
   useEffect(() => {
+    if (typeof navigator === "undefined") return;
     const ua = navigator.userAgent.toLowerCase();
     setIsMobile(/iphone|ipad|android|mobile/.test(ua));
   }, []);
@@ -88,12 +102,16 @@ export default function FriendGame() {
     <main className="min-h-screen px-6 py-8">
       <div className="max-w-6xl mx-auto grid lg:grid-cols-[380px,1fr] gap-8">
         <div className="flex flex-col items-center gap-4">
-          <Board board={board} onClick={doMove} disabled={isSpectator || (role === "X" && turn !== "X") || (role === "O" && turn !== "O") || !!winner || draw} />
+          <Board
+            board={board}
+            onClick={doMove}
+            disabled={isSpectator || (role === "X" && turn !== "X") || (role === "O" && turn !== "O") || !!winner || draw}
+          />
           <div className="text-center">
-            <div className="font-semibold">{header}</div>
+            <div className="font-semibold">{isSpectator ? "Spectator board (play from phones)" : `You are ${role}`}</div>
             <div className="text-sm text-gray-600 mt-1">Turn: <b>{turn}</b></div>
             {winner && <div className="mt-1">Winner: <b>{winner}</b></div>}
-            {draw && !winner && <div className="mt-1">It\'s a draw.</div>}
+            {draw && !winner && <div className="mt-1">It's a draw.</div>}
           </div>
           <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
         </div>
@@ -101,10 +119,13 @@ export default function FriendGame() {
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
             <div className="font-semibold">Connect phones</div>
-            <div className="text-sm text-gray-600">Scan to join this room: <b>{room}</b></div>
+            <div className="text-sm text-gray-600">Scan to join this room: <b>{room || "…"}</b></div>
             <div className="mt-4 grid sm:grid-cols-2 gap-4">
               {isMobile && !isSpectator ? (
-                <QRBlock label={`Share with your friend (join as ${otherRole})`} url={otherRole === "X" ? joinUrlX : joinUrlO} />
+                <QRBlock
+                  label={`Share with your friend (join as ${otherRole})`}
+                  url={otherRole === "X" ? joinUrlX : joinUrlO}
+                />
               ) : (
                 <>
                   <QRBlock label="Join as X" url={joinUrlX} />
