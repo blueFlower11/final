@@ -29,28 +29,24 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
   const botSymbol = playerSymbol === "X" ? "O" : "X";
 
+  // Initialize a new game on mount
   useEffect(() => {
-    // Randomize who starts
-    const first: "player"|"bot" = Math.random() < 0.5 ? "player" : "bot";
     const player = Math.random() < 0.5 ? "X" : "O";
+    const botStarts = player === "O"; // if player is O, bot (X) starts
     setPlayerSymbol(player);
-    setTurn("X"); // turn is always "X" to start logically
     setBoard(Array(9).fill(null));
     setHL(null);
-    setStatus(first === "player" ? "You start!" : "Bot starts.");
-    if (first === "bot") {
-      // If bot is X
-      const botIsX = player === "O";
-      if (botIsX) {
-        setBusy(true);
-        requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
-          .then(res => {
-            const idx = res?.index ?? Math.floor(Math.random()*9);
-            setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
-            setTurn("O");
-          })
-          .finally(() => setBusy(false));
-      }
+    setStatus(botStarts ? "Bot starts." : "You start!");
+    setTurn("X");
+    if (botStarts) {
+      setBusy(true);
+      requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
+        .then(res => {
+          const idx = (res && typeof res.index === "number") ? res.index : Math.floor(Math.random()*9);
+          setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
+          setTurn("O");
+        })
+        .finally(() => setBusy(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.mode]);
@@ -58,7 +54,8 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   const outcome = useMemo(() => checkWinner(board), [board]);
 
   useEffect(() => {
-    if (outcome?.winner !== undefined) {
+    if (!outcome) return;
+    if (outcome.winner !== undefined) {
       if (outcome.winner) setStatus(outcome.winner === playerSymbol ? "You win! 🎉" : "Bot wins. 🤖");
       else setStatus("It's a draw.");
       setHL(outcome.line || null);
@@ -81,4 +78,50 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     if (after) return; // game finished
 
     // Bot's turn
-    setBusy(True as unknown as boolean)
+    setBusy(true);
+    const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
+    const idx = (res && typeof res.index === "number") ? res.index : next.findIndex(c => c === null);
+    if (idx >= 0) {
+      setBoard(prev => prev.map((c, j) => j === idx ? botSymbol : c));
+      setTurn(playerSymbol);
+    }
+    setBusy(false);
+  }
+
+  function reset() {
+    setBoard(Array(9).fill(null));
+    setHL(null);
+    setStatus("New game!");
+    const player = Math.random() < 0.5 ? "X" : "O";
+    const botStarts = player === "O"; // if player is O, bot (X) starts
+    setPlayerSymbol(player);
+    setTurn("X");
+    if (botStarts) {
+      setBusy(true);
+      requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
+        .then(res => {
+          const idx = (res && typeof res.index === "number") ? res.index : Math.floor(Math.random()*9);
+          setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
+          setTurn("O");
+        })
+        .finally(() => setBusy(false));
+    }
+  }
+
+  return (
+    <main className="min-h-screen px-6 py-8 flex items-start justify-center">
+      <div className="max-w-5xl w-full grid md:grid-cols-[380px,1fr] gap-8">
+        <div className="flex flex-col items-center gap-4">
+          <Board board={board} onClick={handleClick} disabled={busy || !!outcome || turn !== playerSymbol} highlight={hl} />
+          <div className="text-center">
+            <div className="font-semibold">Mode: {params.mode === "learning" ? "Learning bot" : "Classic bot"}</div>
+            <div className="text-sm text-gray-600 mt-1">You are <b>{playerSymbol}</b>. {status}</div>
+            {outcome && <button onClick={reset} className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white">Play again</button>}
+          </div>
+          <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
+        </div>
+        <RobotAssistant busy={busy} board={board} mode={params.mode} />
+      </div>
+    </main>
+  );
+}
