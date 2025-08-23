@@ -42,81 +42,6 @@ function getBoardModel(type) {
   return type === "stupid" ? Stupid : Smart; // default = Smart
 }
 
-app.get("/api/game/history", (req, res) => {
-  const history = Object.values(games).map((g) => ({
-    id: g.id,
-    players: g.players,
-    winner: g.winner,
-  }));
-  res.json(history);
-});
-
-// app.post("/api/game/ai-move", (req, res) => {
-//   const { board } = req.body;
-//   const boardArray = Array.from(board.replace(/\|/g, '').split('').map(v => v === ' ' ? null : v));
-//   const empty = boardArray
-//     .map((v, i) => (v ? null : i))
-//     .filter((v) => v !== null);
-//   const move = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
-//   res.json({ move });
-// });
-
-app.post("/api/game/ai-move", async (req, res) => {
-  try {
-    const { board, step, type } = req.body;
-    const Boards = getBoardModel(type);
-
-    // normalize board string like Java code did
-    const normalized = "|" + board.replace(/\|/g, "") + "|";
-
-    // find matching boards in DB
-    const dbBoards = await Boards.findAll({ where: { step } });
-
-    let chosenBoard = null;
-    let chosenMove = null;
-
-    for (let b of dbBoards) {
-      if (b.board === normalized) {
-        // collect "beads"
-        const beads = [];
-        Object.entries({
-          0: b.p00,
-          1: b.p01,
-          2: b.p02,
-          3: b.p10,
-          4: b.p11,
-          5: b.p12,
-          6: b.p20,
-          7: b.p21,
-          8: b.p22,
-        }).forEach(([pos, count]) => {
-          for (let i = 0; i < count; i++) beads.push(Number(pos));
-        });
-
-        // random weighted choice
-        if (beads.length > 0) {
-          const move = beads[Math.floor(Math.random() * beads.length)];
-          chosenBoard = b;
-          chosenMove = move;
-          break;
-        }
-      }
-    }
-
-    if (!chosenMove) {
-      // fallback = random empty
-      const boardArray = Array.from(board.replace(/\|/g, "").split("").map(v => v === " " ? null : v));
-      const empty = boardArray.map((v, i) => (v ? null : i)).filter(v => v !== null);
-      chosenMove = empty.length ? empty[Math.floor(Math.random() * empty.length)] : null;
-    }
-
-    res.json({ move: chosenMove, boardId: chosenBoard?.id });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "AI move failed" });
-  }
-});
-
 function rowBeadsToArray(row) {
   return [
     row.p00, row.p01, row.p02,
@@ -127,14 +52,13 @@ function rowBeadsToArray(row) {
 
 function weightedPick(weights) {
   const total = weights.reduce((a,b) => a + b, 0);
-  if (total <= 0) return -1; // no legal moves (all zero)
+  if (total <= 0) return -1; 
   const r = Math.random() * total;
   let acc = 0;
   for (let i = 0; i < weights.length; i++) {
     acc += weights[i];
     if (r < acc) return i;
   }
-  return weights.length - 1; // fallback
 }
 
 function getModel(table) {
@@ -149,25 +73,20 @@ function countFilled(inner9) {
   return n;
 }
 
-// 🚀 POST /move
 app.post('/move', async (req, res) => {
   try {
     const { board, step, table } = req.body;
     const Model = getModel(table);
 
-    // Normalize input -> inner 9 chars "X/O/ " (no pipes)
     const inner = normalizeBoardToString(board);
 
-    // Generate all symmetry variants (inner form)
     const transformedInner = TRANSFORMS_WITH_INV.map(t => ({
       ...t,
       boardStr: applyTransform(inner, t.map),
     }));
 
-    // Wrap each with pipes for DB query
     const wrappedBoards = transformedInner.map(t => wrapWithPipes(t.boardStr));
 
-    // Compute possible step values
     const filled = countFilled(inner);
     const stepsToTry = Array.from(new Set([
       step,
@@ -176,7 +95,6 @@ app.post('/move', async (req, res) => {
       Math.max(filled - 1, 0),
     ].filter(s => Number.isInteger(s) && s >= 0)));
 
-    // Query DB with different steps
     let candidates = [];
     let usedStep = null;
     for (const st of stepsToTry) {
@@ -194,7 +112,6 @@ app.post('/move', async (req, res) => {
       }
     }
 
-    // Step-agnostic fallback for diagnostics
     if (!candidates.length) {
       const stepAgnostic = await Model.findAll({
         where: { board: { [Op.in]: wrappedBoards } },
@@ -211,7 +128,6 @@ app.post('/move', async (req, res) => {
       });
     }
 
-    // Find which transform matched
     let match = null;
     for (const t of transformedInner) {
       const wrapped = wrapWithPipes(t.boardStr);
@@ -224,13 +140,10 @@ app.post('/move', async (req, res) => {
 
     const { row, transform } = match;
 
-    // Legal moves mask: only empty spaces
     const legalMask = transform.boardStr.split('').map(c => (c === ' ' ? 1 : 0));
 
-    // Beads array from row, apply mask
     const beads = rowBeadsToArray(row).map((w, i) => (legalMask[i] ? w : 0));
 
-    // Weighted random pick
     const dbPosition = weightedPick(beads);
     if (dbPosition < 0) {
       return res.status(409).json({
@@ -240,7 +153,6 @@ app.post('/move', async (req, res) => {
       });
     }
 
-    // Map back to original orientation
     const moveIndex = transform.map[dbPosition];
 
     return res.json({
@@ -258,115 +170,112 @@ app.post('/move', async (req, res) => {
   }
 });
 
-// app.post('/move', async (req, res) => {
-//   try {
-//     const { board, step, table } = req.body;
-//     if (step == null) return res.status(400).json({ error: 'Missing step' });
-//     const boardStr = normalizeBoardToString(board);
-//     const Model = getModel(table);
-
-//     // Generate all symmetry variants of the incoming board
-//     const transformedBoards = TRANSFORMS_WITH_INV.map(t => ({
-//       ...t,
-//       boardStr: applyTransform(boardStr, t.map),
-//     }));
-
-//     // Try to find a DB row whose `board` matches any of these (and step matches)
-//     const candidates = await Model.findAll({
-//       where: {
-//         step,
-//         board: {
-//           [Op.in]: transformedBoards.map(t => t.boardStr),
-//         },
-//       },
-//       limit: 8,
-//     });
-
-//     if (!candidates.length) {
-//       return res.status(404).json({
-//         error: 'No matching board found in DB for any symmetry',
-//         tried: transformedBoards.map(t => t.boardStr),
-//       });
-//     }
-
-//     // Pick the first match, but record which symmetry matched it
-//     // (If you’d rather prefer a canonical order, you can sort candidates by id or bead sum)
-//     const match = (() => {
-//       for (const t of transformedBoards) {
-//         const row = candidates.find(r => r.board === t.boardStr);
-//         if (row) return { row, transform: t };
-//       }
-//       return null;
-//     })();
-
-//     if (!match) {
-//       return res.status(500).json({ error: 'Internal: could not align match to transform' });
-//     }
-
-//     const { row, transform } = match;
-//     const beads = rowBeadsToArray(row); // beads for the matched orientation
-
-//     // Choose a DB position with probability proportional to bead count
-//     const dbPosition = weightedPick(beads);
-//     if (dbPosition < 0) {
-//       return res.status(409).json({
-//         error: 'No legal moves: all bead counts are zero for this board',
-//         boardId: row.id,
-//         transform: transform.name,
-//       });
-//     }
-
-//     // Map DB position back to the ORIGINAL request orientation
-//     // transform.inv maps "matched orientation index" -> "original orientation index"
-//     const moveIndex = transform.inv[dbPosition];
-
-//     return res.json({
-//       moveIndex,              // index 0..8 on the ORIGINAL input board
-//       boardId: row.id,        // which DB row was used
-//       dbPosition,             // which index 0..8 was picked in the matched DB orientation
-//       transform: transform.name,
-//     });
-
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({ error: 'Server error', detail: String(err.message || err) });
-//   }
-// });
-
-app.post("/api/game/ai-update", async (req, res) => {
+app.post('/save', async (req, res) => {
   try {
-    const { moves, winner } = req.body; 
-    const Boards = getBoardModel("smart");
-    // moves = [{ boardId, pos }]
-    
-    for (let { boardId, pos } of moves) {
-      const board = await Boards.findByPk(boardId);
-      if (!board) continue;
+    const { list, result, table = 'smart' } = req.body || {};
 
-      const win = winner === "AI";
-      const tie = winner === null;
-
-      // adjust beads like in Java code
-      const field = ["p00","p01","p02","p10","p11","p12","p20","p21","p22"][pos];
-      if (win) {
-        board[field] += 2;
-        board.win++;
-      } else if (tie) {
-        board[field] += 1;
-      } else {
-        board[field] = Math.max(0, board[field] - 1);
-        board.lose++;
-      }
-
-      await board.save();
+    const tbl = String(table).toLowerCase();
+    if (tbl !== 'smart') {
+      return res.json({ ok: true, skipped: true, reason: 'table_not_smart', table });
     }
 
-    res.json({ status: "updated" });
+    if (!Array.isArray(list) || list.length === 0) {
+      return res.status(400).json({ error: 'Body must include list: [{ boardId, position }]' });
+    }
+    const norm = String(result || '').toLowerCase();
+    const isWin  = norm === 'win';
+    const isDraw = norm === 'draw' || norm === 'duce' || norm === 'tie';
+    const isLose = norm === 'lose' || norm === 'loss';
+    if (!isWin && !isDraw && !isLose) {
+      return res.status(400).json({ error: 'result must be one of: win | draw | duce | tie | lose' });
+    }
+
+    const Model = typeof getModel === 'function'
+      ? getModel('smart')
+      : Smart;
+
+    const POS_COLS = ['p00','p01','p02','p10','p11','p12','p20','p21','p22'];
+
+    const t = await Model.sequelize.transaction();
+    try {
+      const updates = [];
+
+      for (const item of list) {
+        const boardId  = Number(item?.boardId);
+        const position = Number(item?.position);
+
+        if (!Number.isInteger(boardId) || !Number.isInteger(position) || position < 0 || position > 8) {
+          throw new Error('Each list item needs valid { boardId:number, position:0..8 }');
+        }
+
+        const col = POS_COLS[position];
+
+        const row = await Model.findByPk(boardId, { transaction: t, lock: t.LOCK.UPDATE });
+        if (!row) {
+          updates.push({ boardId, position, skipped: true, reason: 'not_found' });
+          continue;
+        }
+
+        const before = Number(row[col] ?? 1);
+
+        let delta = 0;
+        if (isWin) delta = 2;
+        else if (isDraw) delta = 1;
+        else if (isLose) delta = before > 1 ? -1 : 0;
+
+        const after = Math.max(1, before + delta);
+        row[col] = after;
+        await row.save({ transaction: t });
+
+        updates.push({ boardId, position, from: before, to: after });
+      }
+
+      await t.commit();
+      return res.json({ ok: true, updates });
+    } catch (err) {
+      await t.rollback();
+      throw err;
+    }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: "Failed to update AI" });
+    return res.status(400).json({ error: String(err.message || err) });
   }
 });
+
+// app.post("/api/game/ai-update", async (req, res) => {
+//   try {
+//     const { moves, winner } = req.body; 
+//     const Boards = getBoardModel("smart");
+//     // moves = [{ boardId, pos }]
+    
+//     for (let { boardId, pos } of moves) {
+//       const board = await Boards.findByPk(boardId);
+//       if (!board) continue;
+
+//       const win = winner === "AI";
+//       const tie = winner === null;
+
+//       // adjust beads like in Java code
+//       const field = ["p00","p01","p02","p10","p11","p12","p20","p21","p22"][pos];
+//       if (win) {
+//         board[field] += 2;
+//         board.win++;
+//       } else if (tie) {
+//         board[field] += 1;
+//       } else {
+//         board[field] = Math.max(0, board[field] - 1);
+//         board.lose++;
+//       }
+
+//       await board.save();
+//     }
+
+//     res.json({ status: "updated" });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({ error: "Failed to update AI" });
+//   }
+// });
 
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
