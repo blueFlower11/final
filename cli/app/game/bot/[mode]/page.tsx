@@ -19,6 +19,50 @@ function checkWinner(b: Cell[]) {
   return null;
 }
 
+function pickBotLine(who: "X" | "O", situation?: "start" | "block" | "win" | "random") {
+  const piece = who;
+  const phrases = {
+    start: [
+      `I'll start with ${piece} here.`,
+      `Opening move! ${piece} sets the tone.`,
+      `${piece} in a strong spot to begin.`,
+    ],
+    block: [
+      `I see that threat — blocking with ${piece}.`,
+      `Not so fast! ${piece} stops your line.`,
+      `I'll block your plan using ${piece}.`,
+    ],
+    win: [
+      `This should clinch it with ${piece}.`,
+      `Dropping ${piece} here to finish the job.`,
+      `Looks winning — ${piece} goes there.`,
+    ],
+    random: [
+      `Hmm, ${piece} feels right here.`,
+      `Let’s try ${piece} in this spot.`,
+      `I’ll place ${piece} there and see.`,
+    ]
+  } as const;
+
+  const pool = phrases[situation || "random"];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function isWinningMove(b: Cell[], idx: number, sym: "X"|"O") {
+  const test = b.slice();
+  test[idx] = sym;
+  const out = checkWinner(test);
+  return !!(out && out.winner === sym);
+}
+function isBlockingMove(b: Cell[], idx: number, sym: "X"|"O") {
+  const opp: "X"|"O" = sym === "X" ? "O" : "X";
+  // Would the opponent win if we *didn't* play here but they did?
+  const test = b.slice();
+  test[idx] = opp;
+  const out = checkWinner(test);
+  return !!(out && out.winner === opp);
+}
+
 export default function BotGame({ params }: { params: { mode: "learning" | "static" } }) {
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [turn, setTurn] = useState<"X"|"O">("X");
@@ -59,31 +103,31 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   //   return trimmed || `I'll place ${piece} where it pressures the center and opens a fork.`;
   // }
 
-  function scriptFromResponse(who: "X" | "O", situation?: "start" | "block" | "win" | "random") {
-    const piece = who;
-    const phrases = {
-      start: [
-        `I'll start strong by placing ${piece} in the middle.`,
-        `Opening move! ${piece} goes here.`,
-      ],
-      block: [
-        `Nice try — but I’ll block you with ${piece}.`,
-        `I see your plan, so I'll stop it with ${piece}.`,
-      ],
-      win: [
-        `This should give me the win with ${piece}.`,
-        `Victory is close! Dropping ${piece} here.`,
-      ],
-      random: [
-        `Hmm, ${piece} feels right here.`,
-        `Let’s see how you handle ${piece} in this spot.`,
-        `I’ll put ${piece} there, looks good.`,
-      ]
-    };
+  // function scriptFromResponse(who: "X" | "O", situation?: "start" | "block" | "win" | "random") {
+  //   const piece = who;
+  //   const phrases = {
+  //     start: [
+  //       `I'll start strong by placing ${piece} in the middle.`,
+  //       `Opening move! ${piece} goes here.`,
+  //     ],
+  //     block: [
+  //       `Nice try — but I’ll block you with ${piece}.`,
+  //       `I see your plan, so I'll stop it with ${piece}.`,
+  //     ],
+  //     win: [
+  //       `This should give me the win with ${piece}.`,
+  //       `Victory is close! Dropping ${piece} here.`,
+  //     ],
+  //     random: [
+  //       `Hmm, ${piece} feels right here.`,
+  //       `Let’s see how you handle ${piece} in this spot.`,
+  //       `I’ll put ${piece} there, looks good.`,
+  //     ]
+  //   };
   
-    const pool = phrases[situation || "random"];
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
+  //   const pool = phrases[situation || "random"];
+  //   return pool[Math.floor(Math.random() * pool.length)];
+  // }
 
   function revealPendingBotMove() {
     if (pendingBotIdx == null) return;
@@ -115,7 +159,9 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
           : Math.floor(Math.random() * 9);
 
         setPendingBotIdx(idx);
-        setBotScript(scriptFromResponse(botSymbol, "block"));
+        const situation: "start" | "block" | "win" | "random" =
+          isWinningMove(Array(9).fill(null), idx, "X") ? "win" : "start";
+        setBotScript(pickBotLine("X", situation));
         setBotTalking(true);
         // Move will be revealed when RobotAssistant signals it's done via onFinished
         // (handled in RobotAssistant onFinished callback below)
@@ -205,7 +251,12 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     // setBusy(false);
     if (idx >= 0) {
       setPendingBotIdx(idx);
-      setBotScript(scriptFromResponse(botSymbol, "random"));
+      const situation: "start" | "block" | "win" | "random" =
+        isWinningMove(next, idx, botSymbol) ? "win"
+        : isBlockingMove(next, idx, botSymbol) ? "block"
+        : "random";
+
+      setBotScript(pickBotLine(botSymbol, situation));
       setBotTalking(true);
       // We wait for RobotAssistant.onFinished to reveal the move
     } else {
