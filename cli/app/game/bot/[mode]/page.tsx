@@ -85,6 +85,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         result: outcome.winner ? (outcome.winner === playerSymbol ? "player_win" : "bot_win") : (outcome.draw ? "draw" : "unknown"),
         moves: logs
       };
+      console.log(payload);
       requestSave(payload).then(() => setSaved(true));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
