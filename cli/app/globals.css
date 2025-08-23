@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: 255 255 255;
+  --fg: 17 24 39;
+}
+
+html, body, #__next { height: 100%; }
+
+body {
+  @apply bg-gradient-to-br from-indigo-50 via-white to-pink-50 text-gray-800;
+  font-feature-settings: "rlig" 1, "calt" 1;
+}
