@@ -28,6 +28,9 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   const [status, setStatus] = useState<string>("");
   const [logs, setLogs] = useState<Array<{ boardId: number; position: number }>>([]);
   const [saved, setSaved] = useState(false);
+  const [botTalking, setBotTalking] = useState(false);
+  const [botScript, setBotScript] = useState<string>("");
+  const [pendingBotIdx, setPendingBotIdx] = useState<number|null>(null);
 
   const botSymbol = playerSymbol === "X" ? "O" : "X";
 
@@ -45,6 +48,52 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     }
   }
 
+  // function scriptFromResponse(res: any, who: "X" | "O") {
+  //   const piece = who === "X" ? "X" : "O";
+  //   const raw =
+  //     (res && (res.explanation || res.reason || res.text || res.message)) ||
+  //     "";
+  //   const trimmed = typeof raw === "string" ? raw.trim() : "";
+
+  //   // Keep it short; add a default if missing
+  //   return trimmed || `I'll place ${piece} where it pressures the center and opens a fork.`;
+  // }
+
+  function scriptFromResponse(who: "X" | "O", situation?: "start" | "block" | "win" | "random") {
+    const piece = who;
+    const phrases = {
+      start: [
+        `I'll start strong by placing ${piece} in the middle.`,
+        `Opening move! ${piece} goes here.`,
+      ],
+      block: [
+        `Nice try — but I’ll block you with ${piece}.`,
+        `I see your plan, so I'll stop it with ${piece}.`,
+      ],
+      win: [
+        `This should give me the win with ${piece}.`,
+        `Victory is close! Dropping ${piece} here.`,
+      ],
+      random: [
+        `Hmm, ${piece} feels right here.`,
+        `Let’s see how you handle ${piece} in this spot.`,
+        `I’ll put ${piece} there, looks good.`,
+      ]
+    };
+  
+    const pool = phrases[situation || "random"];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function revealPendingBotMove() {
+    if (pendingBotIdx == null) return;
+    setBoard(prev => prev.map((c, j) => j === pendingBotIdx ? botSymbol : c));
+    setPendingBotIdx(null);
+    setTurn(playerSymbol);
+    setBotTalking(false);
+    setBusy(false);
+  }
+
   // Initialize a new game on mount or mode change
   useEffect(() => {
     const player = Math.random() < 0.5 ? "X" : "O";
@@ -57,15 +106,36 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setLogs([]);
     setSaved(false);
     if (botStarts) {
-      setBusy(true);
-      requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
-        .then(res => {
-          captureFromResponse(res);
-          const idx = (res && typeof (res as any).index === "number") ? (res as any).index : Math.floor(Math.random()*9);
-          setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
-          setTurn("O");
-        })
-        .finally(() => setBusy(false));
+      (async () => {
+        setBusy(true);
+        const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
+        captureFromResponse(res);
+        const idx = (res && typeof (res as any).index === "number")
+          ? (res as any).index
+          : Math.floor(Math.random() * 9);
+
+        setPendingBotIdx(idx);
+        setBotScript(scriptFromResponse(botSymbol, "block"));
+        setBotTalking(true);
+        // Move will be revealed when RobotAssistant signals it's done via onFinished
+        // (handled in RobotAssistant onFinished callback below)
+      })().catch(() => {
+        // fallback: still place something if API failed
+        const idx = Math.floor(Math.random() * 9);
+        setPendingBotIdx(idx);
+        setBotScript(`I'll start here to control the board.`);
+        setBotTalking(true);
+        setBusy(true);
+      });
+      // setBusy(true);
+      // requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
+      //   .then(res => {
+      //     captureFromResponse(res);
+      //     const idx = (res && typeof (res as any).index === "number") ? (res as any).index : Math.floor(Math.random()*9);
+      //     setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
+      //     setTurn("O");
+      //   })
+      //   .finally(() => setBusy(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.mode]);
@@ -128,11 +198,21 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
     captureFromResponse(res);
     const idx = (res && typeof (res as any).index === "number") ? (res as any).index : next.findIndex(c => c === null);
+    // if (idx >= 0) {
+    //   setBoard(prev => prev.map((c, j) => j === idx ? botSymbol : c));
+    //   setTurn(playerSymbol);
+    // }
+    // setBusy(false);
     if (idx >= 0) {
-      setBoard(prev => prev.map((c, j) => j === idx ? botSymbol : c));
+      setPendingBotIdx(idx);
+      setBotScript(scriptFromResponse(botSymbol, "random"));
+      setBotTalking(true);
+      // We wait for RobotAssistant.onFinished to reveal the move
+    } else {
+      // Nothing available (shouldn’t happen), just end turn
+      setBusy(false);
       setTurn(playerSymbol);
     }
-    setBusy(false);
   }
 
   function reset() {
@@ -159,18 +239,53 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   }
 
   return (
-    <main className="min-h-screen px-6 py-8 flex items-start justify-center">
-      <div className="max-w-5xl w-full grid md:grid-cols-[380px,1fr] gap-8">
+    // <main className="min-h-screen px-6 py-8 flex items-start justify-center">
+    //   <div className="max-w-5xl w-full grid md:grid-cols-[380px,1fr] gap-8">
+    //     <div className="flex flex-col items-center gap-4">
+    //       <Board board={board} onClick={handleClick} disabled={busy || !!outcome || turn !== playerSymbol} highlight={hl} />
+    //       <div className="text-center">
+    //         <div className="font-semibold">Mode: {params.mode === "learning" ? "Learning bot" : "Classic bot"}</div>
+    //         <div className="text-sm text-gray-600 mt-1">You are <b>{playerSymbol}</b>. {status}</div>
+    //         {outcome && <button onClick={reset} className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white">Play again</button>}
+    //       </div>
+    //       <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
+    //     </div>
+    //     <RobotAssistant busy={busy} board={board} mode={params.mode} />
+    //   </div>
+    // </main>
+    <main className="min-h-screen px-6 py-8 flex items-center justify-center">
+      <div className="max-w-5xl w-full grid md:grid-cols-[380px,1fr] gap-8 items-center">
+        {/* Bot figure + comic bubble (bubble only shows when botTalking) */}
+        <RobotAssistant
+          talking={botTalking}
+          text={botScript}
+          onFinished={revealPendingBotMove}
+        />
+
         <div className="flex flex-col items-center gap-4">
-          <Board board={board} onClick={handleClick} disabled={busy || !!outcome || turn !== playerSymbol} highlight={hl} />
+          <Board
+            board={board}
+            onClick={handleClick}
+            disabled={busy || !!outcome || turn !== playerSymbol}
+            highlight={hl}
+          />
           <div className="text-center">
             <div className="font-semibold">Mode: {params.mode === "learning" ? "Learning bot" : "Classic bot"}</div>
-            <div className="text-sm text-gray-600 mt-1">You are <b>{playerSymbol}</b>. {status}</div>
-            {outcome && <button onClick={reset} className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white">Play again</button>}
+            <div className="text-sm text-gray-400 mt-1">
+              You are <b>{playerSymbol}</b>.{" "}
+              {busy && botTalking ? "Bot is thinking…" : status}
+            </div>
+            {outcome && (
+              <button
+                onClick={reset}
+                className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white"
+              >
+                Play again
+              </button>
+            )}
           </div>
           <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
         </div>
-        <RobotAssistant busy={busy} board={board} mode={params.mode} />
       </div>
     </main>
   );
