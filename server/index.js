@@ -171,6 +171,7 @@ app.post('/move', async (req, res) => {
 });
 
 app.post('/save', async (req, res) => {
+  console.log(req.body);
   try {
     const { list, result, table = 'smart' } = req.body || {};
 
