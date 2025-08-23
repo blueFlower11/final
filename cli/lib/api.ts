@@ -23,7 +23,7 @@ export async function requestBotMove({
     const res = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ toPipeBoard(board), player }),
+      body: JSON.stringify({ board: toPipeBoard(board), player }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
