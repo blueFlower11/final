@@ -116,7 +116,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
     // Player move
     const next = board.slice();
-    console.log(next);
     next[i] = playerSymbol;
     setBoard(next);
     setTurn(botSymbol);
