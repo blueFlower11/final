@@ -26,17 +26,22 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   const [busy, setBusy] = useState(false);
   const [hl, setHL] = useState<number[]|null>(null);
   const [status, setStatus] = useState<string>("");
-  const [logs, setLogs] = useState<{boardId?: string|number; position?: any;}[]>([]);
+  const [logs, setLogs] = useState<Array<{ boardId: number; position: number }>>([]);
   const [saved, setSaved] = useState(false);
 
   const botSymbol = playerSymbol === "X" ? "O" : "X";
 
   function captureFromResponse(res: any) {
     if (!res) return;
-    const boardId = (res as any).boardId ?? (res as any).board_id ?? (res as any).id;
-    const position = (res as any).position ?? (res as any).board ?? (res as any).state;
-    if (boardId !== undefined || position !== undefined) {
-      setLogs(prev => [...prev, { boardId, position }]);
+    const boardId = (res as any).boardId ?? (res as any).id ?? (res as any).board_id;
+    // dbPosition is the index in the matched DB orientation — this is what /save needs
+    const dbPosition =
+      (res as any).dbPosition ??
+      (res as any).position ?? // fallback if server ever used "position"
+      undefined;
+  
+    if (Number.isInteger(boardId) && Number.isInteger(dbPosition)) {
+      setLogs(prev => [...prev, { boardId: Number(boardId), position: Number(dbPosition) }]);
     }
   }
 
@@ -80,16 +85,28 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   useEffect(() => {
     if (!outcome || saved) return;
     if (outcome.winner !== undefined) {
-      const payload = {
-        mode: params.mode,
-        result: outcome.winner ? (outcome.winner === playerSymbol ? "player_win" : "bot_win") : (outcome.draw ? "draw" : "unknown"),
-        moves: logs
-      };
-      console.log(payload);
-      requestSave(payload).then(() => setSaved(true));
+      // result from the BOT’s perspective
+      const result =
+        outcome.winner
+          ? (outcome.winner === botSymbol ? "win" : "lose")
+          : (outcome.draw ? "draw" : "draw"); // safe default
+  
+      // table mapping: learning -> smart (updates), static -> stupid (skips)
+      const table = params.mode === "learning" ? "smart" : "stupid";
+  
+      // only send valid items
+      const list = logs.filter(
+        it => Number.isInteger(it.boardId) && Number.isInteger(it.position)
+      );
+  
+      if (list.length > 0) {
+        requestSave({ list, result, table }).then(() => setSaved(true));
+      } else {
+        setSaved(true);
+      }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [outcome, saved]);
+    // include deps that affect the computed values
+  }, [outcome, saved, logs, params.mode, botSymbol]);
 
   async function handleClick(i: number) {
     if (busy) return;

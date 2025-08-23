@@ -34,16 +34,49 @@ export async function requestBotMove({
   }
 }
 
-export async function requestSave(payload: any): Promise<boolean> {
+export type SaveItem = { boardId: number; position: number }; // position is 0..8 in the DB orientation
+export type SaveResult = "win" | "draw" | "duce" | "tie" | "lose";
+
+export async function requestSave({
+  list,
+  result,
+  table = "smart",
+}: {
+  list: SaveItem[];
+  result: SaveResult;
+  table?: "smart" | "stupid";
+}): Promise<
+  | {
+      ok: true;
+      updates?: Array<{
+        boardId: number;
+        position: number;
+        from?: number;
+        to?: number;
+        skipped?: boolean;
+        reason?: string;
+      }>;
+      skipped?: boolean;
+      reason?: string;
+      table?: string;
+    }
+  | { ok?: false; error: string }
+> {
   try {
     const res = await fetch(`${API_BASE}${ENDPOINT_SAVE}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: JSON.stringify({ list, result, table }),
     });
-    return res.ok;
-  } catch (e) {
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      // backend sends 400 with { error }
+      return { ok: false as const, error: data?.error ?? `HTTP ${res.status}` };
+    }
+    return data;
+  } catch (e: any) {
     console.error("Save error:", e);
-    return false;
+    return { ok: false, error: String(e?.message || e) };
   }
 }
