@@ -242,41 +242,6 @@ app.post('/save', async (req, res) => {
   }
 });
 
-// app.post("/api/game/ai-update", async (req, res) => {
-//   try {
-//     const { moves, winner } = req.body; 
-//     const Boards = getBoardModel("smart");
-//     // moves = [{ boardId, pos }]
-    
-//     for (let { boardId, pos } of moves) {
-//       const board = await Boards.findByPk(boardId);
-//       if (!board) continue;
-
-//       const win = winner === "AI";
-//       const tie = winner === null;
-
-//       // adjust beads like in Java code
-//       const field = ["p00","p01","p02","p10","p11","p12","p20","p21","p22"][pos];
-//       if (win) {
-//         board[field] += 2;
-//         board.win++;
-//       } else if (tie) {
-//         board[field] += 1;
-//       } else {
-//         board[field] = Math.max(0, board[field] - 1);
-//         board.lose++;
-//       }
-
-//       await board.save();
-//     }
-
-//     res.json({ status: "updated" });
-//   } catch (err) {
-//     console.error(err);
-//     res.status(500).json({ error: "Failed to update AI" });
-//   }
-// });
-
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
