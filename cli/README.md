@@ -59,3 +59,16 @@ A Vercel-ready frontend that talks to your existing backend. It supports:
 - Fully responsive with Tailwind
 - Nice defaults; easy to restyle
 - No server-side rendering needed for game logic
+
+
+### Save endpoint
+Bot games collect `boardId` and `position` from each bot-move response (looks for `boardId`/`board_id`/`id` and `position`/`board`/`state`). 
+When the game finishes, the app POSTs to `${API_BASE}${ENDPOINT_SAVE}` with:
+```json
+{
+  "mode": "learning|static",
+  "result": "player_win|bot_win|draw",
+  "moves": [{ "boardId": "...", "position": ... }]
+}
+```
+Configure with `NEXT_PUBLIC_ENDPOINT_SAVE` (default `/save`).

@@ -1,4 +1,4 @@
-import { API_BASE, ENDPOINT_LEARNING, ENDPOINT_STATIC } from "./config";
+import { API_BASE, ENDPOINT_LEARNING, ENDPOINT_STATIC, ENDPOINT_SAVE } from "./config";
 
 export type Cell = "X" | "O" | null;
 export type Board = Cell[];
@@ -9,7 +9,7 @@ export async function requestBotMove({
   mode,
 }: {
   board: Board;
-  player: "X" | "O"; // which symbol the BOT will play
+  player: "X" | "O";
   mode: "learning" | "static";
 }): Promise<{ index: number; board?: Board; winner?: "X" | "O" | null; draw?: boolean; } | null> {
   const endpoint = mode === "learning" ? ENDPOINT_LEARNING : ENDPOINT_STATIC;
@@ -25,5 +25,19 @@ export async function requestBotMove({
   } catch (e) {
     console.error("Bot move error:", e);
     return null;
+  }
+}
+
+export async function requestSave(payload: any): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}${ENDPOINT_SAVE}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return res.ok;
+  } catch (e) {
+    console.error("Save error:", e);
+    return false;
   }
 }

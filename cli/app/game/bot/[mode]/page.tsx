@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Board, type Cell } from "@/components/Board";
 import { RobotAssistant } from "@/components/RobotAssistant";
-import { requestBotMove } from "@/lib/api";
+import { requestBotMove, requestSave } from "@/lib/api";
 import Link from "next/link";
 
 function checkWinner(b: Cell[]) {
@@ -26,10 +26,21 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   const [busy, setBusy] = useState(false);
   const [hl, setHL] = useState<number[]|null>(null);
   const [status, setStatus] = useState<string>("");
+  const [logs, setLogs] = useState<{boardId?: string|number; position?: any;}[]>([]);
+  const [saved, setSaved] = useState(false);
 
   const botSymbol = playerSymbol === "X" ? "O" : "X";
 
-  // Initialize a new game on mount
+  function captureFromResponse(res: any) {
+    if (!res) return;
+    const boardId = (res as any).boardId ?? (res as any).board_id ?? (res as any).id;
+    const position = (res as any).position ?? (res as any).board ?? (res as any).state;
+    if (boardId !== undefined || position !== undefined) {
+      setLogs(prev => [...prev, { boardId, position }]);
+    }
+  }
+
+  // Initialize a new game on mount or mode change
   useEffect(() => {
     const player = Math.random() < 0.5 ? "X" : "O";
     const botStarts = player === "O"; // if player is O, bot (X) starts
@@ -38,11 +49,14 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setHL(null);
     setStatus(botStarts ? "Bot starts." : "You start!");
     setTurn("X");
+    setLogs([]);
+    setSaved(false);
     if (botStarts) {
       setBusy(true);
       requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
         .then(res => {
-          const idx = (res && typeof res.index === "number") ? res.index : Math.floor(Math.random()*9);
+          captureFromResponse(res);
+          const idx = (res && typeof (res as any).index === "number") ? (res as any).index : Math.floor(Math.random()*9);
           setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
           setTurn("O");
         })
@@ -62,6 +76,20 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     }
   }, [outcome, playerSymbol]);
 
+  // When game finishes, send accumulated logs once
+  useEffect(() => {
+    if (!outcome || saved) return;
+    if (outcome.winner !== undefined) {
+      const payload = {
+        mode: params.mode,
+        result: outcome.winner ? (outcome.winner === playerSymbol ? "player_win" : "bot_win") : (outcome.draw ? "draw" : "unknown"),
+        moves: logs
+      };
+      requestSave(payload).then(() => setSaved(true));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [outcome, saved]);
+
   async function handleClick(i: number) {
     if (busy) return;
     if (outcome) return;
@@ -80,7 +108,8 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     // Bot's turn
     setBusy(true);
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
-    const idx = (res && typeof res.index === "number") ? res.index : next.findIndex(c => c === null);
+    captureFromResponse(res);
+    const idx = (res && typeof (res as any).index === "number") ? (res as any).index : next.findIndex(c => c === null);
     if (idx >= 0) {
       setBoard(prev => prev.map((c, j) => j === idx ? botSymbol : c));
       setTurn(playerSymbol);
@@ -92,6 +121,8 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setBoard(Array(9).fill(null));
     setHL(null);
     setStatus("New game!");
+    setLogs([]);
+    setSaved(false);
     const player = Math.random() < 0.5 ? "X" : "O";
     const botStarts = player === "O"; // if player is O, bot (X) starts
     setPlayerSymbol(player);
@@ -100,7 +131,8 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
       setBusy(true);
       requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
         .then(res => {
-          const idx = (res && typeof res.index === "number") ? res.index : Math.floor(Math.random()*9);
+          captureFromResponse(res);
+          const idx = (res && typeof (res as any).index === "number") ? (res as any).index : Math.floor(Math.random()*9);
           setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
           setTurn("O");
         })
