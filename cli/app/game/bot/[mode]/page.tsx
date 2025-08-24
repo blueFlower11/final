@@ -5,6 +5,7 @@ import { Board, type Cell } from "@/components/Board";
 import { RobotAssistant } from "@/components/RobotAssistant";
 import { requestBotMove, requestSave } from "@/lib/api";
 import Link from "next/link";
+import { useLang } from "@/lib/lang/LanguageContext";
 
 function checkWinner(b: Cell[]) {
   const lines = [
@@ -19,50 +20,9 @@ function checkWinner(b: Cell[]) {
   return null;
 }
 
-function pickBotLine(who: "X" | "O", situation?: "start" | "block" | "win" | "random") {
-  const piece = who;
-  const phrases = {
-    start: [
-      `I'll start with ${piece} here.`,
-      `Opening move! ${piece} sets the tone.`,
-      `${piece} in a strong spot to begin.`,
-    ],
-    block: [
-      `I see that threat — blocking with ${piece}.`,
-      `Not so fast! ${piece} stops your line.`,
-      `I'll block your plan using ${piece}.`,
-    ],
-    win: [
-      `This should clinch it with ${piece}.`,
-      `Dropping ${piece} here to finish the job.`,
-      `Looks winning — ${piece} goes there.`,
-    ],
-    random: [
-      `Hmm, ${piece} feels right here.`,
-      `Let’s try ${piece} in this spot.`,
-      `I’ll place ${piece} there and see.`,
-    ]
-  } as const;
-
-  const pool = phrases[situation || "random"];
-  return pool[Math.floor(Math.random() * pool.length)];
-}
-
-function isWinningMove(b: Cell[], idx: number, sym: "X"|"O") {
-  const test = b.slice();
-  test[idx] = sym;
-  const out = checkWinner(test);
-  return !!(out && out.winner === sym);
-}
-function isBlockingMove(b: Cell[], idx: number, sym: "X"|"O") {
-  const opp: "X"|"O" = sym === "X" ? "O" : "X";
-  const test = b.slice();
-  test[idx] = opp;
-  const out = checkWinner(test);
-  return !!(out && out.winner === opp);
-}
-
 export default function BotGame({ params }: { params: { mode: "learning" | "static" } }) {
+  const { t } = useLang();
+
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [turn, setTurn] = useState<"X"|"O">("X");
   const [playerSymbol, setPlayerSymbol] = useState<"X"|"O">("X");
@@ -98,6 +58,46 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setBotTalking(false);
     setBusy(false);
   }
+  
+  function countOpen(b: Cell[]) {
+    return b.reduce((n, c) => n + (c ? 0 : 1), 0);
+  }
+  
+  function spotsText(n: number) {
+    return `${n} ${t("bot.open")}${n === 1 ? t("bot.open1") : t("bot.openMore")}`;
+  }
+  
+  function buildBotSpeech(
+    b: Cell[],
+    idx: number | null,
+    who: "X" | "O",
+    situation: "start" | "block" | "win" | "random"
+  ) {
+    const open = countOpen(b);
+    const tail =
+      situation === "start"
+        ? ` ${spotsText(open)} — ${who} ${t("bot.chose")} ${open} ${t("bot.move")}${open === 1 ? t("bot.move1") : t("bot.moveMore")}.`
+        : situation === "block"
+        ? ` ${spotsText(open)} — ${t("bot.block")}`
+        : situation === "win"
+        ? ` ${spotsText(open)} ${t("bot.win")}`
+        : ` ${spotsText(open)} — ${open} ${t("bot.random")}`;
+    return `${tail}`;
+  }
+  
+  function isWinningMove(b: Cell[], idx: number, sym: "X"|"O") {
+    const test = b.slice();
+    test[idx] = sym;
+    const out = checkWinner(test);
+    return !!(out && out.winner === sym);
+  }
+  function isBlockingMove(b: Cell[], idx: number, sym: "X"|"O") {
+    const opp: "X"|"O" = sym === "X" ? "O" : "X";
+    const test = b.slice();
+    test[idx] = opp;
+    const out = checkWinner(test);
+    return !!(out && out.winner === opp);
+  }
 
   useEffect(() => {
     const player = Math.random() < 0.5 ? "X" : "O";
@@ -105,7 +105,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setPlayerSymbol(player);
     setBoard(Array(9).fill(null));
     setHL(null);
-    setStatus(botStarts ? "Bot starts." : "You start!");
+    setStatus(botStarts ? t("bot.botStart") : t("bot.youStart"));
     setTurn("X");
     setLogs([]);
     setSaved(false);
@@ -121,12 +121,12 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         setPendingBotIdx(idx);
         const situation: "start" | "block" | "win" | "random" =
           isWinningMove(Array(9).fill(null), idx, "X") ? "win" : "start";
-        setBotScript(pickBotLine("X", situation));
+        setBotScript(buildBotSpeech(Array(9).fill(null), idx, "X", situation));
         setBotTalking(true);
       })().catch(() => {
         const idx = Math.floor(Math.random() * 9);
         setPendingBotIdx(idx);
-        setBotScript(`I'll start here to control the board.`);
+        setBotScript(t("bot.botStartD"));
         setBotTalking(true);
         setBusy(true);
       });
@@ -139,8 +139,8 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   useEffect(() => {
     if (!outcome) return;
     if (outcome.winner !== undefined) {
-      if (outcome.winner) setStatus(outcome.winner === playerSymbol ? "You win! 🎉" : "Bot wins. 🤖");
-      else setStatus("It's a draw.");
+      if (outcome.winner) setStatus(outcome.winner === playerSymbol ? `${t("bot.winY")} 🎉` : `${t("bot.winB")} 🤖`);
+      else setStatus(t("game.draw"));
       setHL(outcome.line || null);
     }
   }, [outcome, playerSymbol]);
@@ -193,7 +193,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         : isBlockingMove(next, idx, botSymbol) ? "block"
         : "random";
 
-      setBotScript(pickBotLine(botSymbol, situation));
+      setBotScript(buildBotSpeech(next, idx, botSymbol, situation));
       setBotTalking(true);
     } else {
       setBusy(false);
@@ -204,7 +204,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   function reset() {
     setBoard(Array(9).fill(null));
     setHL(null);
-    setStatus("New game!");
+    setStatus(t("bot.new"));
     setLogs([]);
     setSaved(false);
     const player = Math.random() < 0.5 ? "X" : "O";
@@ -241,19 +241,18 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
             highlight={hl}
           />
           <div className="text-center">
-            <div className="font-semibold">Mode: {params.mode === "learning" ? "Learning bot" : "Classic bot"}</div>
+            <div className="font-semibold">{t("bot.mode")}{params.mode === "learning" ? t("bot.learning") : t("bot.classic")}</div>
             <div className="text-sm text-gray-400 mt-1">
-              You are <b>{playerSymbol}</b>.{" "}
-              {busy && botTalking ? "Bot is thinking…" : status}
+              {t("game.role")} <b>{playerSymbol}</b>.{" "}
+              {busy && botTalking ? t("bot.thinking") : status}
             </div>
             {outcome && (
               <button
                 onClick={reset}
-                className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white"
-               data-i18n="auto.play-again">Play again</button>
+                className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white">{t("game.again")}</button>
             )}
           </div>
-          <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
+          <Link href="/game" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
         </div>
       </div>
     </main>

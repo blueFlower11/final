@@ -6,39 +6,39 @@ import { Users, Bot, BotIcon } from "lucide-react";
 import { useLang } from "@/lib/lang/LanguageContext";
 
 export default function GameHub() {
-  const { lang } = useLang();
+  const { t } = useLang();
   const cards = useMemo(() => ([
     {
       href: "/game/friend",
-      title: "Play with a friend",
+      title: t("game.friend"),
       icon: <Users />,
-      desc: "Connect devices with QR codes and take turns."
+      desc: t("game.friendD")
     },
     {
       href: "/game/bot/static",
-      title: "Play with a classic bot",
+      title: t("game.stupid"),
       icon: <BotIcon />,
-      desc: "The bot plays valid moves but doesn't learn."
+      desc: t("game.stupidD")
     },
     {
       href: "/game/bot/learning",
-      title: "Play with a learning bot",
+      title: t("game.smart"),
       icon: <Bot />,
-      desc: "This bot updates its strategy over time."
+      desc: t("game.smartD")
     },
   ]), []);
 
   return (
     <main className="min-h-screen px-6 py-12">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-bold" data-i18n="auto.choose-your-mode">Choose your mode</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold" data-i18n="auto.choose-your-mode">{this("game.title")}</h1>
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           {cards.map(card => (
             <Link key={card.href} href={card.href} className="group rounded-2xl p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col">
               <div className="text-2xl">{card.icon}</div>
               <div className="mt-4 text-xl font-semibold">{card.title}</div>
               <p className="mt-2 text-gray-600">{card.desc}</p>
-              <span className="mt-auto text-indigo-600 group-hover:underline" data-i18n="auto.start">Start →</span>
+              <span className="mt-auto text-indigo-600 group-hover:underline" data-i18n="auto.start">{`${t("game.start")} →`}</span>
             </Link>
           ))}
         </div>

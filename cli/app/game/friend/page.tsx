@@ -5,12 +5,15 @@ import { Board, type Cell } from "@/components/Board";
 import { getSocket } from "@/lib/socket";
 import { QRBlock } from "@/components/QRBlock";
 import Link from "next/link";
+import { useLang } from "@/lib/lang/LanguageContext";
 
 function genRoom() {
   return Math.random().toString(36).slice(2, 8);
 }
 
 export default function FriendGame() {
+  const { t } = useLang();
+
   const [board, setBoard] = useState<Cell[]>(Array(9).fill(null));
   const [turn, setTurn] = useState<"X"|"O">("X");
   const [winner, setWinner] = useState<"X"|"O"|null>(null);
@@ -103,36 +106,36 @@ export default function FriendGame() {
             disabled={isSpectator || (role === "X" && turn !== "X") || (role === "O" && turn !== "O") || !!winner || draw}
           />
           <div className="text-center">
-            <div className="font-semibold">{isSpectator ? "Spectator board (play from phones)" : `You are ${role}`}</div>
-            <div className="text-sm text-gray-600 mt-1">Turn: <b>{turn}</b></div>
-            {winner && <div className="mt-1">Winner: <b>{winner}</b></div>}
-            {draw && !winner && <div className="mt-1" data-i18n="auto.it-s-a-draw">It's a draw.</div>}
+            <div className="font-semibold">{isSpectator ? t("game.spectator") : `${t("game.role")} ${role}`}</div>
+            <div className="text-sm text-gray-600 mt-1">{t("game.turn")}<b>{turn}</b></div>
+            {winner && <div className="mt-1">{t("game.winner")}<b>{winner}</b></div>}
+            {draw && !winner && <div className="mt-1">{t("game.draw")}</div>}
           </div>
-          <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
+          <Link href="/game" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
         </div>
 
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-            <div className="font-semibold" data-i18n="auto.connect-phones">Connect phones</div>
-            <div className="text-sm text-gray-600">Scan to join this room: <b>{room || "…"}</b></div>
+            <div className="font-semibold">{t("game.connect")}</div>
+            <div className="text-sm text-gray-600">{t("game.scan")}<b>{room || "…"}</b></div>
             <div className="mt-4 grid sm:grid-cols-2 gap-4">
               {isMobile && !isSpectator ? (
                 <QRBlock
-                  label={`Share with your friend (join as ${otherRole})`}
+                  label={`${t("game.share")} ${otherRole})`}
                   url={otherRole === "X" ? joinUrlX : joinUrlO}
                 />
               ) : (
                 <>
-                  <QRBlock label="Join as X" url={joinUrlX} />
-                  <QRBlock label="Join as O" url={joinUrlO} />
+                  <QRBlock label={t("game.joinX")} url={joinUrlX} />
+                  <QRBlock label={t("game.joinO")} url={joinUrlO} />
                 </>
               )}
             </div>
             <div className="text-xs text-gray-500 mt-3">
-              {isMobile ? "Both players can play from their phones." : "On a big screen, keep this page open as the board. Players make moves from their phones."}
+              {isMobile ? t("game.phones") : t("game.screen")}
             </div>
           </div>
-          {!connected && <div className="text-sm text-red-600" data-i18n="auto.connecting-to-game-server">Connecting to game server…</div>}
+          {!connected && <div className="text-sm text-red-600">{t("game.server")}</div>}
         </div>
       </div>
     </main>
