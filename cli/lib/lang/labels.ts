@@ -52,6 +52,13 @@ export const labels = {
         classic: "Classic bot",
         learning: "Learning bot",
         thinking: "Bot is thinking..."
+      },
+      learning: {
+        title: "Learn: Reinforcement Learning Stories",
+        subtitles: "Pick a story to explore how reinforcement learning works, one page at a time.",
+        read: "Read story →",
+        prev: "Previous",
+        next: "Next"
       }
     },
     hr: {
@@ -107,6 +114,13 @@ export const labels = {
         classic: "Klasični bot",
         learning: "Bot koji uči",
         thinking: "Bot razmišlja..."
+      },
+      learning: {
+        title: "Istraži: Podržano učenje kroz priče",
+        subtitles: "Odaberi priču i istraži kako podržano učenje radi.",
+        read: "Čitaj priču →",
+        prev: "Prethodna stranica",
+        next: "Slijedeća stranica"
       }
     }
   } as const;
