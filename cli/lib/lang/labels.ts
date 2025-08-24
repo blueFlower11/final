@@ -1,12 +1,10 @@
 export const labels = {
     en: {
       home: {
-        title: "Tic‑Tac‑Toe RL",
+        title: "Tic‑Tac‑Toe",
+        subtitle: "",
         play: "Play",
-        singleplayer: "Singleplayer",
-        multiplayer: "Multiplayer",
-        gameWithBot: "Play vs Bot",
-        game: "Game",
+        learn: "Learn more"
       },
       common: {
         start: "Start",
@@ -27,12 +25,10 @@ export const labels = {
     },
     hr: {
       home: {
-        title: "Križić‑Kružić RL",
+        title: "Križić‑Kružić",
+        subtitle: "",
         play: "Igraj",
-        singleplayer: "Jedan igrač",
-        multiplayer: "Više igrača",
-        gameWithBot: "Igra protiv bota",
-        game: "Igra",
+        learn: "Istraži"
       },
       common: {
         start: "Start",
