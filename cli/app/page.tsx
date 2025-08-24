@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Gamepad2, Brain } from "lucide-react";
+import { useLang } from "@/lib/lang/LanguageContext";
 
 export default function Home() {
+  const { lang } = useLang();
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="max-w-3xl text-center">

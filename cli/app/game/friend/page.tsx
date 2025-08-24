@@ -17,14 +17,12 @@ export default function FriendGame() {
   const [draw, setDraw] = useState(false);
   const [connected, setConnected] = useState(false);
 
-  // URL/role are derived client-side only (avoid window during SSR)
   const [room, setRoom] = useState<string>("");
   const [role, setRole] = useState<"X"|"O"|"spectator">("spectator");
   const [currentUrl, setCurrentUrl] = useState<string>("");
 
   const socketRef = useRef<any>(null);
 
-  // Client-only initialization
   useEffect(() => {
     if (typeof window === "undefined") return;
     setCurrentUrl(window.location.href);
@@ -35,7 +33,6 @@ export default function FriendGame() {
     const initialRoom = qRoom || genRoom();
     setRoom(initialRoom);
     if (qRole === "X" || qRole === "O") setRole(qRole);
-    // Ensure URL has room persisted
     if (!qRoom) {
       const url = new URL(window.location.href);
       url.searchParams.set("room", initialRoom);
@@ -44,9 +41,8 @@ export default function FriendGame() {
     }
   }, []);
 
-  // Socket wiring
   useEffect(() => {
-    if (!room) return; // wait until client has set a room
+    if (!room) return;
     const socket = getSocket();
     socketRef.current = socket;
     socket.on("connect", () => setConnected(true));
@@ -70,7 +66,6 @@ export default function FriendGame() {
     socketRef.current?.emit("move", { room, index: i, symbol: role });
   }
 
-  // Build join links on client only
   const joinUrlX = (() => {
     if (!currentUrl || !room) return "";
     const u = new URL(currentUrl);

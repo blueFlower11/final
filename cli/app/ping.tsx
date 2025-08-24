@@ -1,6 +1,6 @@
 'use client';
 
-import { API_BASE } from '@/lib/config';
+import { API_BASE, ENDPOINT_PING } from '@/lib/config';
 import { useEffect } from 'react';
 
 export default function PingClient() {
@@ -11,19 +11,17 @@ export default function PingClient() {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
-        await fetch(`${BACKEND}/ping`, {
+        await fetch(`${BACKEND}/${ENDPOINT_PING}`, {
           keepalive: true,
           signal: controller.signal,
           cache: 'no-store',
         });
         clearTimeout(timeoutId);
-      } catch {
-        // silently ignore to avoid noisy logs
-      }
+      } catch {}
     };
 
-    ping(); // immediate
-    const id = setInterval(ping, 60_000); // every minute
+    ping();
+    const id = setInterval(ping, 60_000);
 
     const onVisible = () => { if (document.visibilityState === 'visible') ping(); };
     document.addEventListener('visibilitychange', onVisible);

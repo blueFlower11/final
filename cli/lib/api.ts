@@ -1,10 +1,9 @@
-import { API_BASE, ENDPOINT_LEARNING, ENDPOINT_STATIC, ENDPOINT_SAVE } from "./config";
+import { API_BASE, ENDPOINT_MOVE, ENDPOINT_SAVE } from "./config";
 
 export type Cell = "X" | "O" | null;
 export type Board = Cell[];
 
 function toPipeBoard(board: Board): string {
-  // convert array of 9 cells into a single string with pipes around it
   const s = board.map(c => (c ? c : " ")).join("");
   return `|${s}|`;
 }
@@ -18,7 +17,7 @@ export async function requestBotMove({
   player: "X" | "O";
   mode: "learning" | "static";
 }): Promise<{ index: number; board?: Board; winner?: "X" | "O" | null; draw?: boolean; } | null> {
-  const endpoint = mode === "learning" ? ENDPOINT_LEARNING : ENDPOINT_STATIC;
+  const endpoint = ENDPOINT_MOVE
   console.log(toPipeBoard(board));
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
@@ -35,7 +34,7 @@ export async function requestBotMove({
   }
 }
 
-export type SaveItem = { boardId: number; position: number }; // position is 0..8 in the DB orientation
+export type SaveItem = { boardId: number; position: number };
 export type SaveResult = "win" | "draw" | "duce" | "tie" | "lose";
 
 export async function requestSave({
@@ -72,7 +71,6 @@ export async function requestSave({
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      // backend sends 400 with { error }
       return { ok: false as const, error: data?.error ?? `HTTP ${res.status}` };
     }
     return data;

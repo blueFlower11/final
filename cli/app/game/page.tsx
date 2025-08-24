@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { Users, Bot, BotIcon } from "lucide-react";
+import { useLang } from "@/lib/lang/LanguageContext";
 
 export default function GameHub() {
+  const { lang } = useLang();
   const cards = useMemo(() => ([
     {
       href: "/game/friend",

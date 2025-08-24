@@ -56,7 +56,6 @@ function isWinningMove(b: Cell[], idx: number, sym: "X"|"O") {
 }
 function isBlockingMove(b: Cell[], idx: number, sym: "X"|"O") {
   const opp: "X"|"O" = sym === "X" ? "O" : "X";
-  // Would the opponent win if we *didn't* play here but they did?
   const test = b.slice();
   test[idx] = opp;
   const out = checkWinner(test);
@@ -81,53 +80,15 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   function captureFromResponse(res: any) {
     if (!res) return;
     const boardId = (res as any).boardId ?? (res as any).id ?? (res as any).board_id;
-    // dbPosition is the index in the matched DB orientation — this is what /save needs
     const dbPosition =
       (res as any).dbPosition ??
-      (res as any).position ?? // fallback if server ever used "position"
+      (res as any).position ??
       undefined;
   
     if (Number.isInteger(boardId) && Number.isInteger(dbPosition)) {
       setLogs(prev => [...prev, { boardId: Number(boardId), position: Number(dbPosition) }]);
     }
   }
-
-  // function scriptFromResponse(res: any, who: "X" | "O") {
-  //   const piece = who === "X" ? "X" : "O";
-  //   const raw =
-  //     (res && (res.explanation || res.reason || res.text || res.message)) ||
-  //     "";
-  //   const trimmed = typeof raw === "string" ? raw.trim() : "";
-
-  //   // Keep it short; add a default if missing
-  //   return trimmed || `I'll place ${piece} where it pressures the center and opens a fork.`;
-  // }
-
-  // function scriptFromResponse(who: "X" | "O", situation?: "start" | "block" | "win" | "random") {
-  //   const piece = who;
-  //   const phrases = {
-  //     start: [
-  //       `I'll start strong by placing ${piece} in the middle.`,
-  //       `Opening move! ${piece} goes here.`,
-  //     ],
-  //     block: [
-  //       `Nice try — but I’ll block you with ${piece}.`,
-  //       `I see your plan, so I'll stop it with ${piece}.`,
-  //     ],
-  //     win: [
-  //       `This should give me the win with ${piece}.`,
-  //       `Victory is close! Dropping ${piece} here.`,
-  //     ],
-  //     random: [
-  //       `Hmm, ${piece} feels right here.`,
-  //       `Let’s see how you handle ${piece} in this spot.`,
-  //       `I’ll put ${piece} there, looks good.`,
-  //     ]
-  //   };
-  
-  //   const pool = phrases[situation || "random"];
-  //   return pool[Math.floor(Math.random() * pool.length)];
-  // }
 
   function revealPendingBotMove() {
     if (pendingBotIdx == null) return;
@@ -138,10 +99,9 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setBusy(false);
   }
 
-  // Initialize a new game on mount or mode change
   useEffect(() => {
     const player = Math.random() < 0.5 ? "X" : "O";
-    const botStarts = player === "O"; // if player is O, bot (X) starts
+    const botStarts = player === "O";
     setPlayerSymbol(player);
     setBoard(Array(9).fill(null));
     setHL(null);
@@ -163,25 +123,13 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
           isWinningMove(Array(9).fill(null), idx, "X") ? "win" : "start";
         setBotScript(pickBotLine("X", situation));
         setBotTalking(true);
-        // Move will be revealed when RobotAssistant signals it's done via onFinished
-        // (handled in RobotAssistant onFinished callback below)
       })().catch(() => {
-        // fallback: still place something if API failed
         const idx = Math.floor(Math.random() * 9);
         setPendingBotIdx(idx);
         setBotScript(`I'll start here to control the board.`);
         setBotTalking(true);
         setBusy(true);
       });
-      // setBusy(true);
-      // requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
-      //   .then(res => {
-      //     captureFromResponse(res);
-      //     const idx = (res && typeof (res as any).index === "number") ? (res as any).index : Math.floor(Math.random()*9);
-      //     setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
-      //     setTurn("O");
-      //   })
-      //   .finally(() => setBusy(false));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.mode]);
@@ -197,20 +145,16 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     }
   }, [outcome, playerSymbol]);
 
-  // When game finishes, send accumulated logs once
   useEffect(() => {
     if (!outcome || saved) return;
     if (outcome.winner !== undefined) {
-      // result from the BOT’s perspective
       const result =
         outcome.winner
           ? (outcome.winner === botSymbol ? "win" : "lose")
-          : (outcome.draw ? "draw" : "draw"); // safe default
+          : (outcome.draw ? "draw" : "draw");
   
-      // table mapping: learning -> smart (updates), static -> stupid (skips)
       const table = params.mode === "learning" ? "smart" : "stupid";
   
-      // only send valid items
       const list = logs.filter(
         it => Number.isInteger(it.boardId) && Number.isInteger(it.position)
       );
@@ -221,7 +165,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         setSaved(true);
       }
     }
-    // include deps that affect the computed values
   }, [outcome, saved, logs, params.mode, botSymbol]);
 
   async function handleClick(i: number) {
@@ -230,25 +173,19 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     if (turn !== playerSymbol) return;
     if (board[i]) return;
 
-    // Player move
     const next = board.slice();
     next[i] = playerSymbol;
     setBoard(next);
     setTurn(botSymbol);
 
     const after = checkWinner(next);
-    if (after) return; // game finished
+    if (after) return;
 
-    // Bot's turn
     setBusy(true);
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
     captureFromResponse(res);
     const idx = (res && typeof (res as any).index === "number") ? (res as any).index : next.findIndex(c => c === null);
-    // if (idx >= 0) {
-    //   setBoard(prev => prev.map((c, j) => j === idx ? botSymbol : c));
-    //   setTurn(playerSymbol);
-    // }
-    // setBusy(false);
+
     if (idx >= 0) {
       setPendingBotIdx(idx);
       const situation: "start" | "block" | "win" | "random" =
@@ -258,9 +195,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
       setBotScript(pickBotLine(botSymbol, situation));
       setBotTalking(true);
-      // We wait for RobotAssistant.onFinished to reveal the move
     } else {
-      // Nothing available (shouldn’t happen), just end turn
       setBusy(false);
       setTurn(playerSymbol);
     }
@@ -273,7 +208,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setLogs([]);
     setSaved(false);
     const player = Math.random() < 0.5 ? "X" : "O";
-    const botStarts = player === "O"; // if player is O, bot (X) starts
+    const botStarts = player === "O";
     setPlayerSymbol(player);
     setTurn("X");
     if (botStarts) {
@@ -290,23 +225,8 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   }
 
   return (
-    // <main className="min-h-screen px-6 py-8 flex items-start justify-center">
-    //   <div className="max-w-5xl w-full grid md:grid-cols-[380px,1fr] gap-8">
-    //     <div className="flex flex-col items-center gap-4">
-    //       <Board board={board} onClick={handleClick} disabled={busy || !!outcome || turn !== playerSymbol} highlight={hl} />
-    //       <div className="text-center">
-    //         <div className="font-semibold">Mode: {params.mode === "learning" ? "Learning bot" : "Classic bot"}</div>
-    //         <div className="text-sm text-gray-600 mt-1">You are <b>{playerSymbol}</b>. {status}</div>
-    //         {outcome && <button onClick={reset} className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white" data-i18n="auto.play-again">Play again</button>}
-    //       </div>
-    //       <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
-    //     </div>
-    //     <RobotAssistant busy={busy} board={board} mode={params.mode} />
-    //   </div>
-    // </main>
     <main className="min-h-screen px-6 py-8 flex items-center justify-center">
       <div className="max-w-5xl w-full grid md:grid-cols-[380px,1fr] gap-8 items-center">
-        {/* Bot figure + comic bubble (bubble only shows when botTalking) */}
         <RobotAssistant
           talking={botTalking}
           text={botScript}
