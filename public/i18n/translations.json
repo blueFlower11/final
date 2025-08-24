@@ -1,0 +1,36 @@
+{
+  "en": {
+    "auto": {
+      "placeholder": {},
+      "title": {},
+      "choose-your-mode": "Choose your mode",
+      "start": "Start →",
+      "play-again": "Play again",
+      "it-s-a-draw": "It's a draw.",
+      "connect-phones": "Connect phones",
+      "connecting-to-game-server": "Connecting to game server…",
+      "how-the-learning-bot-improves": "How the learning bot improves",
+      "want-to-feel-its-growth-play-a-few-rounds-against-": "Want to feel its growth? Play a few rounds against the learning bot, then come back later and try again.",
+      "little-robot": "Little Robot",
+      "thinking": "thinking…",
+      "tap-a-square-to-make-your-move": "Tap a square to make your move."
+    }
+  },
+  "hr": {
+    "auto": {
+      "placeholder": {},
+      "title": {},
+      "choose-your-mode": "Choose your mode",
+      "start": "Start →",
+      "play-again": "Play again",
+      "it-s-a-draw": "It's a draw.",
+      "connect-phones": "Connect phones",
+      "connecting-to-game-server": "Connecting to game server…",
+      "how-the-learning-bot-improves": "How the learning bot improves",
+      "want-to-feel-its-growth-play-a-few-rounds-against-": "Want to feel its growth? Play a few rounds against the learning bot, then come back later and try again.",
+      "little-robot": "Little Robot",
+      "thinking": "thinking…",
+      "tap-a-square-to-make-your-move": "Tap a square to make your move."
+    }
+  }
+}

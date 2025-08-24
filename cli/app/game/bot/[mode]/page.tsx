@@ -297,7 +297,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     //       <div className="text-center">
     //         <div className="font-semibold">Mode: {params.mode === "learning" ? "Learning bot" : "Classic bot"}</div>
     //         <div className="text-sm text-gray-600 mt-1">You are <b>{playerSymbol}</b>. {status}</div>
-    //         {outcome && <button onClick={reset} className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white">Play again</button>}
+    //         {outcome && <button onClick={reset} className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white" data-i18n="auto.play-again">Play again</button>}
     //       </div>
     //       <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
     //     </div>
@@ -330,9 +330,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
               <button
                 onClick={reset}
                 className="mt-3 px-4 py-2 rounded-xl bg-indigo-600 text-white"
-              >
-                Play again
-              </button>
+               data-i18n="auto.play-again">Play again</button>
             )}
           </div>
           <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>

@@ -111,14 +111,14 @@ export default function FriendGame() {
             <div className="font-semibold">{isSpectator ? "Spectator board (play from phones)" : `You are ${role}`}</div>
             <div className="text-sm text-gray-600 mt-1">Turn: <b>{turn}</b></div>
             {winner && <div className="mt-1">Winner: <b>{winner}</b></div>}
-            {draw && !winner && <div className="mt-1">It's a draw.</div>}
+            {draw && !winner && <div className="mt-1" data-i18n="auto.it-s-a-draw">It's a draw.</div>}
           </div>
           <Link href="/game" className="text-sm text-gray-500 hover:underline">← Back</Link>
         </div>
 
         <div className="space-y-4">
           <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-            <div className="font-semibold">Connect phones</div>
+            <div className="font-semibold" data-i18n="auto.connect-phones">Connect phones</div>
             <div className="text-sm text-gray-600">Scan to join this room: <b>{room || "…"}</b></div>
             <div className="mt-4 grid sm:grid-cols-2 gap-4">
               {isMobile && !isSpectator ? (
@@ -137,7 +137,7 @@ export default function FriendGame() {
               {isMobile ? "Both players can play from their phones." : "On a big screen, keep this page open as the board. Players make moves from their phones."}
             </div>
           </div>
-          {!connected && <div className="text-sm text-red-600">Connecting to game server…</div>}
+          {!connected && <div className="text-sm text-red-600" data-i18n="auto.connecting-to-game-server">Connecting to game server…</div>}
         </div>
       </div>
     </main>

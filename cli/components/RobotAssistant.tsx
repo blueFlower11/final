@@ -43,12 +43,12 @@
 //     <div className="text-sm text-gray-700 space-y-2 p-4 rounded-2xl bg-white/60 border border-gray-200 shadow-sm">
 //       <div className="flex items-center gap-2">
 //         <span className="text-2xl">🤖</span>
-//         <div className="font-semibold">Little Robot</div>
-//         {busy && <span className="ml-auto animate-pulse">thinking…</span>}
+//         <div className="font-semibold" data-i18n="auto.little-robot">Little Robot</div>
+//         {busy && <span className="ml-auto animate-pulse" data-i18n="auto.thinking">thinking…</span>}
 //       </div>
 //       <div className="space-y-1">
 //         {lines.map((l, idx) => <div key={idx}>{l}</div>)}
-//         {!busy && lines.length === 0 && (<div>Tap a square to make your move.</div>)}
+//         {!busy && lines.length === 0 && (<div data-i18n="auto.tap-a-square-to-make-your-move">Tap a square to make your move.</div>)}
 //       </div>
 //     </div>
 //   );

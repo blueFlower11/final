@@ -29,14 +29,14 @@ export default function GameHub() {
   return (
     <main className="min-h-screen px-6 py-12">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-bold">Choose your mode</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold" data-i18n="auto.choose-your-mode">Choose your mode</h1>
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           {cards.map(card => (
             <Link key={card.href} href={card.href} className="group rounded-2xl p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col">
               <div className="text-2xl">{card.icon}</div>
               <div className="mt-4 text-xl font-semibold">{card.title}</div>
               <p className="mt-2 text-gray-600">{card.desc}</p>
-              <span className="mt-auto text-indigo-600 group-hover:underline">Start →</span>
+              <span className="mt-auto text-indigo-600 group-hover:underline" data-i18n="auto.start">Start →</span>
             </Link>
           ))}
         </div>
