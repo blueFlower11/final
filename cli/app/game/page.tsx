@@ -26,10 +26,10 @@ export default function GameHub() {
       icon: <Bot />,
       desc: t("game.smartD")
     },
-  ]), []);
+  ]), [t]);
 
   return (
-    <main className="min-h-screen px-6 py-12 flex flex-col items-center">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12">
       <div className="max-w-5xl w-full text-center">
         <h1 className="text-3xl sm:text-4xl font-bold">{t("game.title")}</h1>
         <div className="mt-8 grid md:grid-cols-3 gap-6 justify-items-center">
@@ -41,8 +41,8 @@ export default function GameHub() {
               <span className="mt-auto text-indigo-600 group-hover:underline">{`${t("game.start")} →`}</span>
             </Link>
           ))}
-          <Link href="/" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
         </div>
+        <Link href="/" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
       </div>
     </main>
   );
