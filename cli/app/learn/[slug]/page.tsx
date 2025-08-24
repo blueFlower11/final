@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { stories } from "@/data/learningStories";
 import { useLang } from "@/lib/lang/LanguageContext";
+import { stories } from "@/lib/lang/learningStories";
 
 type PageProps = { params: { slug: string } };
 
