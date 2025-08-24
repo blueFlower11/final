@@ -805,7 +805,7 @@ export function RobotAssistant({
             clearInterval(timerRef.current);
             timerRef.current = null;
           }
-          setTimeout(() => onFinished?.(), 400);
+          setTimeout(() => onFinished?.(), 2000);
         }
       }, delay);
     }
@@ -862,7 +862,7 @@ export function RobotAssistant({
               // mobile: centered above robot wrapper, responsive width
               "left-1/2 -translate-x-1/2 -top-4 w-[92vw] max-w-[360px]",
               // md+: hug the right edge of the robot wrapper with fixed wide width
-              "md:left-full md:top-1/2 md:-translate-x-0 md:-translate-y-1/2 md:ml-4 md:w-[250px] lg:w-[280px] md:max-w-none",
+              "md:left-full md:top-1/2 md:-translate-x-0 md:-translate-y-1/2 md:ml-4 md:w-[250px] lg:w-[260px] md:max-w-none",
               // spacing + typography (compact vertical, comfy horizontal)
               "rounded-2xl px-5 py-3",
               "text-[16px] md:text-[17px] leading-tight font-medium",
