@@ -38,8 +38,8 @@ export default function LearningHub() {
   const { lang, t } = useLang();
 
   return (
-    <main className="min-h-screen px-6 py-12">
-      <div className="max-w-6xl mx-auto">
+    <main className="min-h-screen flex items-center justify-center px-6">
+      <div className="max-w-6xl w-full text-center">
         <h1 className="text-3xl sm:text-4xl font-bold">
           {t("learning.title")}
         </h1>
@@ -47,12 +47,12 @@ export default function LearningHub() {
           {t("learning.subtitle")}
         </p>
 
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
           {stories.map((s) => (
             <Link
               key={s.slug}
               href={`/learn/${s.slug}`}
-              className="group rounded-2xl p-4 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col"
+              className="group rounded-2xl p-4 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col w-full max-w-xs"
             >
               <div className="relative w-full h-40 rounded-xl overflow-hidden bg-gray-50">
                 <Image src={s.cover} alt={s.title[lang] ?? s.title.en} fill className="object-cover" />
