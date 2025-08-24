@@ -171,7 +171,6 @@ app.post('/move', async (req, res) => {
 });
 
 app.post('/save', async (req, res) => {
-  console.log(req.body);
   try {
     const { list, result, table = 'smart' } = req.body || {};
 
@@ -241,6 +240,25 @@ app.post('/save', async (req, res) => {
     console.error(err);
     return res.status(400).json({ error: String(err.message || err) });
   }
+});
+
+app.get('/ping', async(req, res) => {
+  let db = { ok: null, error: null };
+  try {
+    await sequelize.authenticate();
+    db.ok = true;
+  } catch (e) {
+    db.ok = false;
+    db.error = e?.message || 'unknown error';
+  }
+
+  res.status(200).json({
+    status: 'ok',
+    service: 'server',
+    timestamp: new Date().toISOString(),
+    uptimeSeconds: Math.round(process.uptime()),
+    db,
+  });
 });
 
 io.on("connection", (socket) => {
