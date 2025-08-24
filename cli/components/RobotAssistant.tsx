@@ -319,13 +319,161 @@
 //   );
 // }
 
+// 'use client';
+
+// import { useEffect, useRef, useState } from "react";
+
+// /**
+//  * Classic robot avatar with a comic-style speech bubble that appears ONLY while talking.
+//  * The bobbing animation is applied to an INNER wrapper so it doesn't override the centering transform.
+//  */
+// export function RobotAssistant({
+//   talking,
+//   text,
+//   onFinished
+// }: {
+//   talking: boolean;
+//   text: string;
+//   onFinished?: () => void;
+// }) {
+//   const [visibleText, setVisibleText] = useState<string>("");
+//   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+//   // Typewriter effect
+//   useEffect(() => {
+//     if (timerRef.current) {
+//       clearInterval(timerRef.current);
+//       timerRef.current = null;
+//     }
+//     setVisibleText("");
+
+//     if (talking && text) {
+//       const content = String(text);
+//       let i = 0;
+//       const delay = Math.max(18, Math.min(38, Math.floor(1800 / Math.max(1, content.length))));
+//       timerRef.current = setInterval(() => {
+//         i += 1;
+//         setVisibleText(content.slice(0, i));
+//         if (i >= content.length) {
+//           if (timerRef.current) {
+//             clearInterval(timerRef.current);
+//             timerRef.current = null;
+//           }
+//           setTimeout(() => onFinished?.(), 400);
+//         }
+//       }, delay);
+//     }
+
+//     return () => {
+//       if (timerRef.current) clearInterval(timerRef.current);
+//       timerRef.current = null;
+//     };
+//   }, [talking, text, onFinished]);
+
+//   return (
+//     <div className="relative w-[300px] h-[360px]">
+//       {/* Outer wrapper keeps the centering transform permanently. */}
+//       <div
+//         className="absolute left-1/2 -translate-x-1/2 top-8 w-[200px] h-[200px] grid place-items-center"
+//       >
+//         {/* Inner wrapper gets the animation so transform properties don't clash. */}
+//         <div className={talking ? "bot-bob will-change-transform" : ""}>
+//           <svg
+//             viewBox="0 0 200 220"
+//             className="drop-shadow-2xl"
+//             role="img"
+//             aria-label="Robot assistant"
+//           >
+//             {/* Antenna */}
+//             <circle cx="100" cy="10" r="8" fill="#8B5CF6" />
+//             <rect x="97" y="18" width="6" height="18" rx="3" fill="#8B5CF6" />
+//             {/* Head */}
+//             <rect x="40" y="40" width="120" height="90" rx="16" fill="#D4D4D8" stroke="#111827" strokeWidth="3" />
+//             {/* Eyes */}
+//             <circle cx="75" cy="80" r="10" fill="#111827" />
+//             <circle cx="125" cy="80" r="10" fill="#111827" />
+//             {/* Mouth */}
+//             <rect x="70" y="105" width="60" height="12" rx="6" fill="#111827" />
+//             {/* Cheeks */}
+//             <circle cx="55" cy="95" r="6" fill="#F59E0B" opacity="0.6" />
+//             <circle cx="145" cy="95" r="6" fill="#F59E0B" opacity="0.6" />
+
+//             {/* Neck */}
+//             <rect x="92" y="130" width="16" height="16" rx="4" fill="#6B7280" />
+//             {/* Body */}
+//             <rect x="55" y="145" width="90" height="55" rx="12" fill="#9CA3AF" stroke="#111827" strokeWidth="3" />
+//             {/* Body lights */}
+//             <circle cx="80" cy="170" r="6" fill="#10B981" />
+//             <circle cx="100" cy="170" r="6" fill="#F59E0B" />
+//             <circle cx="120" cy="170" r="6" fill="#EF4444" />
+//           </svg>
+//         </div>
+//       </div>
+
+//       {/* Comic speech bubble — appears only when talking */}
+//       {talking && (
+//         <div
+//           className={[
+//             "absolute",
+//             // mobile: centered above
+//             "left-1/2 -translate-x-1/2 top-0",
+//             // md+: to the right side
+//             "md:left-[calc(50%+150px)] md:top-14 md:-translate-x-0",
+//             // generous sizing & spacing
+//             "max-w-[340px] rounded-2xl px-5 py-4",
+//             "text-[16px] md:text-[17px] leading-relaxed font-medium tracking-wide",
+//             // styling
+//             "border-2 shadow-2xl z-10",
+//             "bg-white text-[#141417] border-[#141417]",
+//             "dark:bg-[#1a1a1f] dark:text-[#e9e9ee] dark:border-[#2a2a33]"
+//           ].join(" ")}
+//           role="status"
+//           aria-live="polite"
+//         >
+//           <div className="whitespace-pre-wrap">{visibleText || "…"}</div>
+
+//           {/* Tail — points toward the robot */}
+//           {/* mobile (tail downwards) */}
+//           <div
+//             className="absolute left-1/2 -translate-x-1/2 -bottom-[12px] w-[22px] h-[22px] rotate-45
+//                        border-2 border-t-0 border-l-0
+//                        bg-white shadow-[3px_3px_0_0_#141417]
+//                        border-[#141417]
+//                        dark:bg-[#1a1a1f] dark:border-[#2a2a33] dark:shadow-[3px_3px_0_0_#2a2a33]
+//                        md:hidden"
+//           />
+//           {/* desktop (tail to the left) */}
+//           <div
+//             className="hidden md:block absolute -left-[12px] top-1/2 -translate-y-1/2 w-[22px] h-[22px] rotate-45
+//                        border-2 border-b-0 border-r-0
+//                        bg-white shadow-[-3px_-3px_0_0_#141417]
+//                        border-[#141417]
+//                        dark:bg-[#1a1a1f] dark:border-[#2a2a33] dark:shadow-[-3px_-3px_0_0_#2a2a33]"
+//           />
+//         </div>
+//       )}
+
+//       {/* Keyframes for bobbing animation */}
+//       <style jsx>{`
+//         .bot-bob {
+//           animation: botbob 1.4s ease-in-out infinite;
+//         }
+//         @keyframes botbob {
+//           0%, 100% { transform: translateY(0); }
+//           50% { transform: translateY(-4px); }
+//         }
+//       `}</style>
+//     </div>
+//   );
+// }
+
 'use client';
 
 import { useEffect, useRef, useState } from "react";
 
 /**
  * Classic robot avatar with a comic-style speech bubble that appears ONLY while talking.
- * The bobbing animation is applied to an INNER wrapper so it doesn't override the centering transform.
+ * Robot stays in normal flow; bubble is absolutely positioned relative to the container.
  */
 export function RobotAssistant({
   talking,
@@ -371,18 +519,17 @@ export function RobotAssistant({
   }, [talking, text, onFinished]);
 
   return (
-    <div className="relative w-[300px] h-[360px]">
-      {/* Outer wrapper keeps the centering transform permanently. */}
-      <div
-        className="absolute left-1/2 -translate-x-1/2 top-8 w-[200px] h-[200px] grid place-items-center"
-      >
-        {/* Inner wrapper gets the animation so transform properties don't clash. */}
+    <div className="relative w-[300px] h-[360px] grid place-items-center">
+      {/* Robot in normal flow (no absolute) */}
+      <div className="w-[200px] h-[200px] grid place-items-center">
         <div className={talking ? "bot-bob will-change-transform" : ""}>
           <svg
             viewBox="0 0 200 220"
-            className="drop-shadow-2xl"
+            className="drop-shadow-2xl block"
             role="img"
             aria-label="Robot assistant"
+            width="200"
+            height="220"
           >
             {/* Antenna */}
             <circle cx="100" cy="10" r="8" fill="#8B5CF6" />
@@ -415,12 +562,12 @@ export function RobotAssistant({
         <div
           className={[
             "absolute",
-            // mobile: centered above
+            // mobile: centered above the robot
             "left-1/2 -translate-x-1/2 top-0",
-            // md+: to the right side
-            "md:left-[calc(50%+150px)] md:top-14 md:-translate-x-0",
+            // md+: to the right side, vertically aligned with robot center
+            "md:left-[calc(50%+180px)] md:top-1/2 md:-translate-x-0 md:-translate-y-1/2",
             // generous sizing & spacing
-            "max-w-[340px] rounded-2xl px-5 py-4",
+            "max-w-[360px] rounded-2xl px-5 py-4",
             "text-[16px] md:text-[17px] leading-relaxed font-medium tracking-wide",
             // styling
             "border-2 shadow-2xl z-10",
