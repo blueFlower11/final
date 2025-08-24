@@ -29,16 +29,16 @@ export default function GameHub() {
   ]), []);
 
   return (
-    <main className="min-h-screen px-6 py-12">
-      <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-bold" data-i18n="auto.choose-your-mode">{t("game.title")}</h1>
-        <div className="mt-8 grid md:grid-cols-3 gap-6">
+    <main className="min-h-screen px-6 py-12 flex flex-col items-center">
+      <div className="max-w-5xl w-full text-center">
+        <h1 className="text-3xl sm:text-4xl font-bold">{t("game.title")}</h1>
+        <div className="mt-8 grid md:grid-cols-3 gap-6 justify-items-center">
           {cards.map(card => (
-            <Link key={card.href} href={card.href} className="group rounded-2xl p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col">
+            <Link key={card.href} href={card.href} className="group rounded-2xl p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col w-full max-w-xs">
               <div className="text-2xl">{card.icon}</div>
               <div className="mt-4 text-xl font-semibold">{card.title}</div>
               <p className="mt-2 text-gray-600">{card.desc}</p>
-              <span className="mt-auto text-indigo-600 group-hover:underline" data-i18n="auto.start">{`${t("game.start")} →`}</span>
+              <span className="mt-auto text-indigo-600 group-hover:underline">{`${t("game.start")} →`}</span>
             </Link>
           ))}
           <Link href="/" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
