@@ -55,7 +55,7 @@ export const labels = {
       },
       learning: {
         title: "Learn: Reinforcement Learning Stories",
-        subtitles: "Pick a story to explore how reinforcement learning works, one page at a time.",
+        subtitle: "Pick a story to explore how reinforcement learning works, one page at a time.",
         read: "Read story →",
         prev: "Previous",
         next: "Next"
@@ -117,7 +117,7 @@ export const labels = {
       },
       learning: {
         title: "Istraži: Podržano učenje kroz priče",
-        subtitles: "Odaberi priču i istraži kako podržano učenje radi.",
+        subtitle: "Odaberi priču i istraži kako podržano učenje radi.",
         read: "Čitaj priču →",
         prev: "Prethodna stranica",
         next: "Slijedeća stranica"

@@ -57,7 +57,7 @@ export default function StoryPage({ params }: PageProps) {
             )}
           </div>
 
-          <Link href="/" className="mt-4 text-indigo-600 hover:underline">
+          <Link href="/learn" className="mt-4 text-indigo-600 hover:underline">
             {t("game.back")}
           </Link>
         </div>
