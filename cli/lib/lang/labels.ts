@@ -87,9 +87,9 @@ export const labels = {
         again: "Igraj ponovo"
       },
       bot: {
-        open: "otvoreno ",
-        open1: "mjseto",
-        openMore: "mjesta",
+        open: "",
+        open1: "otvoreno mjseto",
+        openMore: "otvorenih mjesta",
         chose: "može odabrati između",
         move: "",
         move1: "poteza",
