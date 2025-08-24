@@ -31,7 +31,7 @@ export default function GameHub() {
   return (
     <main className="min-h-screen px-6 py-12">
       <div className="max-w-5xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl font-bold" data-i18n="auto.choose-your-mode">{this("game.title")}</h1>
+        <h1 className="text-3xl sm:text-4xl font-bold" data-i18n="auto.choose-your-mode">{t("game.title")}</h1>
         <div className="mt-8 grid md:grid-cols-3 gap-6">
           {cards.map(card => (
             <Link key={card.href} href={card.href} className="group rounded-2xl p-6 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col">
