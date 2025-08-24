@@ -41,6 +41,7 @@ export default function GameHub() {
               <span className="mt-auto text-indigo-600 group-hover:underline" data-i18n="auto.start">{`${t("game.start")} →`}</span>
             </Link>
           ))}
+          <Link href="/game" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
         </div>
       </div>
     </main>
