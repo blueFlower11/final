@@ -567,7 +567,7 @@ export function RobotAssistant({
             // md+: to the right side, vertically aligned with robot center
             "md:left-[calc(50%+160px)] md:top-1/2 md:-translate-x-0 md:-translate-y-1/2",
             // generous sizing & spacing
-            "max-w-[500px] rounded-2xl px-5 py-3",
+            "max-w-[700px] rounded-2xl px-5 py-3",
             "text-[16px] md:text-[17px] leading-relaxed font-medium tracking-wide",
             // styling
             "border-2 shadow-2xl z-10",
