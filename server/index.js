@@ -181,7 +181,6 @@ app.post('/move', async (req, res) => {
 });
 
 app.post('/save', async (req, res) => {
-  console.log(req.headers);
   try {
     const { list, result, table = 'smart' } = req.body || {};
 
@@ -199,9 +198,9 @@ app.post('/save', async (req, res) => {
 
     let statField = null;
     if (tbl === 'smart') {
-      statField = isWin ? 'smartW' : isDraw ? 'smartD' : 'smartL';
+      statField = isWin ? 'smartL' : isDraw ? 'smartD' : 'smartW';
     } else if (tbl === 'stupid') {
-      statField = isWin ? 'stupidW' : isDraw ? 'stupidD' : 'stupidL';
+      statField = isWin ? 'stupidL' : isDraw ? 'stupidD' : 'stupidW';
     } else {
       statField = null;
     }
