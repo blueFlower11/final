@@ -56,10 +56,10 @@ export default function StoryPage({ params }: PageProps) {
               </button>
             ) : (
               <Link
-                href="/learning"
+                href="/learn"
                 className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100"
               >
-                {t("learning.backToHub") ?? "Back to stories"}
+                {t("game.back")}
               </Link>
             )}
           </div>
