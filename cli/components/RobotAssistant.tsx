@@ -319,6 +319,8 @@
 //   );
 // }
 
+'use client';
+
 import { useEffect, useRef, useState } from "react";
 
 /**
@@ -370,14 +372,11 @@ export function RobotAssistant({
 
   return (
     <div className="relative w-[300px] h-[360px]">
-      {/* 
-        Outer wrapper keeps the centering transform permanently.
-        Inner wrapper gets the animation so transform properties don't clash.
-      */}
+      {/* Outer wrapper keeps the centering transform permanently. */}
       <div
         className="absolute left-1/2 -translate-x-1/2 top-8 w-[200px] h-[200px] grid place-items-center"
-        aria-hidden
       >
+        {/* Inner wrapper gets the animation so transform properties don't clash. */}
         <div className={talking ? "bot-bob will-change-transform" : ""}>
           <svg
             viewBox="0 0 200 220"
