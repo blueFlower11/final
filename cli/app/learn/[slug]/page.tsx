@@ -47,20 +47,13 @@ export default function StoryPage({ params }: PageProps) {
                 {t("learning.prev")}
               </button>
             )}
-            {hasNext ? (
+            {hasNext && (
               <button
                 onClick={() => setPage(p => p + 1)}
                 className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100"
               >
                 {t("learning.next")}
               </button>
-            ) : (
-              <Link
-                href="/learn"
-                className="px-4 py-2 rounded-lg border bg-white hover:bg-gray-100"
-              >
-                {t("game.back")}
-              </Link>
             )}
           </div>
 
