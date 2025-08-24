@@ -38,8 +38,8 @@ export default function LearningHub() {
   const { lang, t } = useLang();
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6">
-      <div className="max-w-6xl w-full text-center">
+    <main className="min-h-screen flex items-center justify-center px-6 py-12">
+      <div className="max-w-5xl w-full text-center">
         <h1 className="text-3xl sm:text-4xl font-bold">
           {t("learning.title")}
         </h1>
