@@ -277,7 +277,7 @@ export function RobotAssistant({
               "left-1/2 -translate-x-1/2 top-0",
               // md+: to the right side
               "md:left-[calc(50%+140px)] md:top-14 md:-translate-x-0",
-              "max-w-[280px] rounded-[14px] px-[14px] py-[12px] text-[14px] leading-snug",
+              "max-w-[340px] rounded-2xl px-5 py-4 text-[16px] md:text-[17px] leading-relaxed font-medium tracking-wide",
               "border-2 shadow-2xl z-10",
               "bg-white text-[#141417] border-[#141417]",
               "dark:bg-[#1a1a1f] dark:text-[#e9e9ee] dark:border-[#2a2a33]",
@@ -285,7 +285,7 @@ export function RobotAssistant({
             role="status"
             aria-live="polite"
           >
-            <div className="max-h-[14lh] overflow-hidden">{visibleText || "…"}</div>
+            <div className="whitespace-pre-wrap">{visibleText || "…"}</div>
             {/* Tail — points toward the robot */}
             {/* mobile (tail downwards) */}
             <div
