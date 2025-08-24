@@ -51,7 +51,7 @@ export default function LearningHub() {
           {stories.map((s) => (
             <Link
               key={s.slug}
-              href={`/learning/${s.slug}`}
+              href={`/learn/${s.slug}`}
               className="group rounded-2xl p-4 bg-white border border-gray-200 shadow-sm hover:shadow-md transition flex flex-col"
             >
               <div className="relative w-full h-40 rounded-xl overflow-hidden bg-gray-50">
