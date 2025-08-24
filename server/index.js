@@ -4,7 +4,7 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 
 const { Op } = require('sequelize');
-const { Smart, Stupid } = require("./db");
+const { Smart, Stupid, Statistics } = require("./db");
 
 const {
   TRANSFORMS_WITH_INV,
