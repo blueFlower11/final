@@ -36,7 +36,17 @@ app.use(cors({
   credentials: true,
 }));
 
+app.set('trust proxy', true);
+
 let games = {};
+
+function getClientIp(req) {
+  const xff = req.headers['true-client-ip'];
+  if (typeof xff === 'string' && xff.length > 0) {
+    return xff.split(',')[0].trim();
+  }
+  return req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || '';
+}
 
 function getBoardModel(type) {
   return type === "stupid" ? Stupid : Smart;
@@ -176,19 +186,44 @@ app.post('/save', async (req, res) => {
     const { list, result, table = 'smart' } = req.body || {};
 
     const tbl = String(table).toLowerCase();
-    if (tbl !== 'smart') {
-      return res.json({ ok: true, skipped: true, reason: 'table_not_smart', table });
-    }
-
-    if (!Array.isArray(list) || list.length === 0) {
-      return res.status(400).json({ error: 'Body must include list: [{ boardId, position }]' });
-    }
+    
     const norm = String(result || '').toLowerCase();
     const isWin  = norm === 'win';
     const isDraw = norm === 'draw' || norm === 'duce' || norm === 'tie';
     const isLose = norm === 'lose' || norm === 'loss';
     if (!isWin && !isDraw && !isLose) {
       return res.status(400).json({ error: 'result must be one of: win | draw | duce | tie | lose' });
+    }
+
+    const ip = getClientIp(req) || 'unknown';
+
+    let statField = null;
+    if (tbl === 'smart') {
+      statField = isWin ? 'smartW' : isDraw ? 'smartD' : 'smartL';
+    } else if (tbl === 'stupid') {
+      statField = isWin ? 'stupidW' : isDraw ? 'stupidD' : 'stupidL';
+    } else {
+      statField = null;
+    }
+
+    await sequelize.transaction(async (t) => {
+      const [row] = await Statistics.findOrCreate({
+        where: { ip },
+        defaults: { ip }, 
+        transaction: t,
+      });
+
+      if (statField) {
+        await row.increment(statField, { by: 1, transaction: t });
+      }
+    });
+
+    if (tbl !== 'smart') {
+      return res.json({ ok: true, skipped: true, reason: 'table_not_smart', table });
+    }
+
+    if (!Array.isArray(list) || list.length === 0) {
+      return res.status(400).json({ error: 'Body must include list: [{ boardId, position }]' });
     }
 
     const Model = typeof getModel === 'function'
