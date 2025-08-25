@@ -4,12 +4,12 @@
 
 :root {
   --bg: 240 249 255;
-  --fg: 17 24 39;
+  --fg: 15 23 42;
 }
 
 html, body, #__next { height: 100%; }
 
 body {
-  @apply bg-gradient-to-br from-blue-200 via-blue-400 to-blue-600 text-gray-800;
+  @apply bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 text-gray-900;
   font-feature-settings: "rlig" 1, "calt" 1;
 }
