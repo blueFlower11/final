@@ -69,6 +69,7 @@ export default function LearningHub() {
             </Link>
           ))}
         </div>
+        <Link href="/" className="text-sm text-gray-500 hover:underline">{`← ${t("game.back")}`}</Link>
       </div>
     </main>
   );
