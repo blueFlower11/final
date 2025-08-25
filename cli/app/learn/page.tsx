@@ -47,7 +47,7 @@ export default function LearningHub() {
           {t("learning.subtitle")}
         </p>
 
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center">
+        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-2 gap-6 justify-items-center">
           {stories.map((s) => (
             <Link
               key={s.slug}
