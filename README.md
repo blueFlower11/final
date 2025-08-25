@@ -19,3 +19,7 @@ This dir contains frontend application code deployed on vercel.
 
 1. install dependencies: `npm i`
 2. run: `npm run test`
+
+## Science
+
+This contains Java code that generates all possible boards of Tic-Tac-Toe game.
