@@ -277,6 +277,24 @@ app.post('/save', async (req, res) => {
   }
 });
 
+
+app.get('/stats', async (req, res) => {
+  try {
+    const { ip } = req.query;
+    const where = ip ? { ip } : undefined;
+
+    const rows = await Statistics.findAll({
+      where,
+      order: [['id', 'ASC']],
+      attributes: ['ip', 'smartW','smartD','smartL','stupidW','stupidD','stupidL']
+    });
+
+    res.json({ ok: true, count: rows.length, rows });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
 app.get('/ping', async(req, res) => {
   let db = { ok: null, error: null };
   try {
