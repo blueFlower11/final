@@ -25,12 +25,12 @@ export default function StoryPage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-yellow-50 px-6 py-12">
-      <div className="max-w-5xl w-full flex flex-col md:flex-row items-center gap-8">
-        <div className="relative w-full md:w-[40%] h-72 md:h-96 rounded-xl overflow-hidden shadow">
+      <div className="max-w-5xl w-full grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+        <div className="relative w-full h-72 md:h-96 rounded-xl overflow-hidden shadow bg-yellow-50">
           <Image src={img} alt={title} fill className="object-contain bg-yellow-50" />
         </div>
 
-        <div className="flex-1 flex flex-col items-center text-center gap-4">
+        <div className="flex flex-col items-center text-center gap-4">
           <h2 className="text-2xl sm:text-3xl font-bold">
             {title}
           </h2>
