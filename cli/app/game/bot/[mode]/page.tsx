@@ -113,6 +113,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
       (async () => {
         setBusy(true);
         const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
+        console.log(res);
         captureFromResponse(res);
         const idx = (res && typeof (res as any).moveIndex === "number")
           ? (res as any).moveIndex
