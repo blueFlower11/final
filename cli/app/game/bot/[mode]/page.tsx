@@ -44,7 +44,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
       (res as any).dbPosition ??
       (res as any).position ??
       undefined;
-    console.log(res);
   
     if (Number.isInteger(boardId) && Number.isInteger(dbPosition)) {
       setLogs(prev => [...prev, { boardId: Number(boardId), position: Number(dbPosition) }]);
@@ -115,8 +114,9 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         setBusy(true);
         const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
         captureFromResponse(res);
+        console.log(res);
         const idx = (res && typeof (res as any).moveIndex === "number")
-          ? (res as any).index
+          ? (res as any).moveIndex
           : Math.floor(Math.random() * 9);
 
         setPendingBotIdx(idx);
