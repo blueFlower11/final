@@ -185,7 +185,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
     captureFromResponse(res);
     const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : next.findIndex(c => c === null);
-
+    console.log(res);
     if (idx >= 0) {
       setPendingBotIdx(idx);
       const situation: "start" | "block" | "win" | "random" =

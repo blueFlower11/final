@@ -165,6 +165,14 @@ app.post('/move', async (req, res) => {
 
     const moveIndex = transform.map[dbPosition];
 
+    const moveNumbersOriginal = Array(9).fill(0);
+    const legalMaskOriginal = Array(9).fill(0);
+    for (let i = 0; i < 9; i++) {
+      const origIdx = transform.map[i];
+      moveNumbersOriginal[origIdx] = moveNumbersMatched[i];
+      legalMaskOriginal[origIdx] = legalMaskMatched[i];
+    }
+
     return res.json({
       moveIndex,               // 0..8 index on original request board
       boardId: row.id,         // DB row id
@@ -172,6 +180,7 @@ app.post('/move', async (req, res) => {
       transform: transform.name,
       usedStep,                // which step value matched
       matchedBoard: wrapWithPipes(transform.boardStr), // what DB board matched
+      moveNumbers,
     });
 
   } catch (err) {
