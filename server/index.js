@@ -180,7 +180,7 @@ app.post('/move', async (req, res) => {
       transform: transform.name,
       usedStep,                // which step value matched
       matchedBoard: wrapWithPipes(transform.boardStr), // what DB board matched
-      moveNumbers,
+      moveNumbers: moveNumbersOriginal,
     });
 
   } catch (err) {
