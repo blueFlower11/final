@@ -169,7 +169,7 @@ app.post('/move', async (req, res) => {
     const legalMaskOriginal = Array(9).fill(0);
     for (let i = 0; i < 9; i++) {
       const origIdx = transform.map[i];
-      moveNumbersOriginal[origIdx] = moveNumbersMatched[i];
+      moveNumbersOriginal[origIdx] = beads[i];
       legalMaskOriginal[origIdx] = legalMaskMatched[i];
     }
 
