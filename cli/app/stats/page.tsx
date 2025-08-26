@@ -38,9 +38,9 @@ export default function StatsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-8 bg-gray-50">
-      <div className="w-full max-w-5xl">
-        <h1 className="text-2xl font-bold mb-4 text-center">Statistics</h1>
+    <main className="min-h-screen flex items-center justify-center px-6 py-8 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+      <div className="w-full max-w-5xl bg-white/70 backdrop-blur-md p-6 rounded-2xl shadow-md">
+        <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Statistics</h1>
 
         <div className="flex gap-2 mb-4 justify-center">
           <input
@@ -61,9 +61,9 @@ export default function StatsPage() {
           <>
             <div className="mb-3 text-sm text-gray-500 text-center">Rows: {data.count}</div>
             <div className="overflow-x-auto">
-              <table className="min-w-full text-sm border rounded">
+              <table className="min-w-full text-sm border rounded bg-white">
                 <thead>
-                  <tr className="text-left border-b">
+                  <tr className="text-left border-b bg-indigo-50">
                     <th className="py-2 pr-4">IP</th>
                     <th className="py-2 pr-4">Smart W</th>
                     <th className="py-2 pr-4">Smart D</th>
