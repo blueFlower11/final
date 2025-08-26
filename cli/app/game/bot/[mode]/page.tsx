@@ -114,7 +114,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         setBusy(true);
         const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
         captureFromResponse(res);
-        console.log(res);
         const idx = (res && typeof (res as any).moveIndex === "number")
           ? (res as any).moveIndex
           : Math.floor(Math.random() * 9);
@@ -185,7 +184,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setBusy(true);
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
     captureFromResponse(res);
-    const idx = (res && typeof (res as any).index === "number") ? (res as any).index : next.findIndex(c => c === null);
+    const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : next.findIndex(c => c === null);
 
     if (idx >= 0) {
       setPendingBotIdx(idx);
@@ -217,7 +216,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
       requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
         .then(res => {
           captureFromResponse(res);
-          const idx = (res && typeof (res as any).index === "number") ? (res as any).index : Math.floor(Math.random()*9);
+          const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : Math.floor(Math.random()*9);
           setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
           setTurn("O");
         })
