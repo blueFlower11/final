@@ -38,7 +38,12 @@ export default function StatsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 py-8 bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+    <main className="relative min-h-screen flex items-center justify-center px-6 py-8">
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 text-gray-900"
+      />
+
       <div className="w-full max-w-5xl bg-white/70 backdrop-blur-md p-6 rounded-2xl shadow-md">
         <h1 className="text-2xl font-bold mb-4 text-center text-gray-800">Statistics</h1>
 
