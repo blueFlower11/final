@@ -44,6 +44,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
       (res as any).dbPosition ??
       (res as any).position ??
       undefined;
+    console.log(res);
   
     if (Number.isInteger(boardId) && Number.isInteger(dbPosition)) {
       setLogs(prev => [...prev, { boardId: Number(boardId), position: Number(dbPosition) }]);
