@@ -323,6 +323,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
             onClick={handleClick}
             disabled={busy || !!outcome || turn !== playerSymbol}
             highlight={hl}
+            heatmap={heatmap || undefined}
           />
           <div className="text-center">
             <div className="font-semibold">{t("bot.mode")}{params.mode === "learning" ? t("bot.learning") : t("bot.classic")}</div>
