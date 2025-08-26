@@ -32,6 +32,7 @@ export const labels = {
         again: "Play again",
         options: "Let's see our options...",
         rand: "I have randomly picked: "
+      },
       bot: {
         open: "open spot",
         open1: "",
