@@ -38,57 +38,59 @@ export default function StatsPage() {
   useEffect(() => { load(); }, []);
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <h1 className="text-2xl font-bold mb-4">Statistics</h1>
+    <main className="min-h-screen flex items-center justify-center px-6 py-8 bg-gray-50">
+      <div className="w-full max-w-5xl">
+        <h1 className="text-2xl font-bold mb-4 text-center">Statistics</h1>
 
-      <div className="flex gap-2 mb-4">
-        <input
-          value={q}
-          onChange={e => setQ(e.target.value)}
-          placeholder="Filter by IP (exact match)"
-          className="border rounded px-3 py-2 w-72"
-        />
-        <button className="bg-indigo-600 text-white px-4 py-2 rounded" onClick={() => load(q)}>Search</button>
-        <button className="px-4 py-2 rounded border" onClick={() => { setQ(''); load(); }}>Clear</button>
-      </div>
+        <div className="flex gap-2 mb-4 justify-center">
+          <input
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            placeholder="Filter by IP (exact match)"
+            className="border rounded px-3 py-2 w-72"
+          />
+          <button className="bg-indigo-600 text-white px-4 py-2 rounded" onClick={() => load(q)}>Search</button>
+          <button className="px-4 py-2 rounded border" onClick={() => { setQ(''); load(); }}>Clear</button>
+        </div>
 
-      {loading ? (
-        <div>Loading…</div>
-      ) : !data?.ok ? (
-        <div className="text-red-600">Failed to load stats: {data?.error || 'Unknown error'}</div>
-      ) : (
-        <>
-          <div className="mb-3 text-sm text-gray-500">Rows: {data.count}</div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="py-2 pr-4">IP</th>
-                  <th className="py-2 pr-4">Smart W</th>
-                  <th className="py-2 pr-4">Smart D</th>
-                  <th className="py-2 pr-4">Smart L</th>
-                  <th className="py-2 pr-4">Stupid W</th>
-                  <th className="py-2 pr-4">Stupid D</th>
-                  <th className="py-2 pr-4">Stupid L</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.rows.map(r => (
-                  <tr key={r.id} className="border-b hover:bg-gray-50">
-                    <td className="py-2 pr-4 font-mono">{r.ip}</td>
-                    <td className="py-2 pr-4">{r.smartW}</td>
-                    <td className="py-2 pr-4">{r.smartD}</td>
-                    <td className="py-2 pr-4">{r.smartL}</td>
-                    <td className="py-2 pr-4">{r.stupidW}</td>
-                    <td className="py-2 pr-4">{r.stupidD}</td>
-                    <td className="py-2 pr-4">{r.stupidL}</td>
+        {loading ? (
+          <div className="text-center">Loading…</div>
+        ) : !data?.ok ? (
+          <div className="text-red-600 text-center">Failed to load stats: {data?.error || 'Unknown error'}</div>
+        ) : (
+          <>
+            <div className="mb-3 text-sm text-gray-500 text-center">Rows: {data.count}</div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm border rounded">
+                <thead>
+                  <tr className="text-left border-b">
+                    <th className="py-2 pr-4">IP</th>
+                    <th className="py-2 pr-4">Smart W</th>
+                    <th className="py-2 pr-4">Smart D</th>
+                    <th className="py-2 pr-4">Smart L</th>
+                    <th className="py-2 pr-4">Stupid W</th>
+                    <th className="py-2 pr-4">Stupid D</th>
+                    <th className="py-2 pr-4">Stupid L</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </>
-      )}
+                </thead>
+                <tbody>
+                  {data.rows.map(r => (
+                    <tr key={r.id} className="border-b hover:bg-gray-50">
+                      <td className="py-2 pr-4 font-mono">{r.ip}</td>
+                      <td className="py-2 pr-4">{r.smartW}</td>
+                      <td className="py-2 pr-4">{r.smartD}</td>
+                      <td className="py-2 pr-4">{r.smartL}</td>
+                      <td className="py-2 pr-4">{r.stupidW}</td>
+                      <td className="py-2 pr-4">{r.stupidD}</td>
+                      <td className="py-2 pr-4">{r.stupidL}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </div>
     </main>
   );
 }
