@@ -147,7 +147,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
       setBotScript("I have randomly picked:");
       setHeatmap(null);
       revealPendingBotMove();
-    }, 1000);
+    }, 3000);
   }
 
   useEffect(() => {
