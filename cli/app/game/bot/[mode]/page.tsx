@@ -115,7 +115,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         setBusy(true);
         const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
         captureFromResponse(res);
-        const idx = (res && typeof (res as any).index === "number")
+        const idx = (res && typeof (res as any).moveIndex === "number")
           ? (res as any).index
           : Math.floor(Math.random() * 9);
 
