@@ -34,6 +34,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   const [botTalking, setBotTalking] = useState(false);
   const [botScript, setBotScript] = useState<string>("");
   const [pendingBotIdx, setPendingBotIdx] = useState<number|null>(null);
+  const [heatmap, setHeatmap] = useState<(string|null)[] | null>(null);
 
   const botSymbol = playerSymbol === "X" ? "O" : "X";
 
@@ -99,6 +100,56 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     return !!(out && out.winner === opp);
   }
 
+  function probsToHeatmap(probabilities: number[], b: Cell[]) {
+    const empties = probabilities
+      .map((p, i) => (b[i] ? null : p))
+      .filter((v): v is number => v != null);
+
+    if (empties.length === 0) return Array(9).fill(null);
+
+    const pMin = Math.min(...empties);
+    const pMax = Math.max(...empties);
+    const span = Math.max(1e-9, pMax - pMin);
+
+    const lerpColor = (c1: [number, number, number], c2: [number, number, number], t: number) => {
+      const mix = (a: number, b: number) => Math.round(a + (b - a) * t);
+      const rgb = [mix(c1[0], c2[0]), mix(c1[1], c2[1]), mix(c1[2], c2[2])];
+      return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+    };
+
+    const RED: [number, number, number]   = [251, 234, 234]; // #fbeaea
+    const WHITE: [number, number, number] = [255, 255, 255]; // white
+    const GREEN: [number, number, number] = [223, 245, 225]; // #dff5e1
+
+    return probabilities.map((p, i) => {
+      if (b[i]) return null;
+      const t = (p - pMin) / span; 
+      if (t <= 0.5) {
+        const tt = t / 0.5;
+        return lerpColor(RED, WHITE, tt);
+      } else {
+        const tt = (t - 0.5) / 0.5;
+        return lerpColor(WHITE, GREEN, tt);
+      }
+    });
+  }
+
+  function previewOptionsThenPick(probabilities: number[] | undefined, idx: number, currentBoard: Cell[], who: "X" | "O") {
+    if (!Number.isInteger(idx)) return;
+
+    const heat = probabilities ? probsToHeatmap(probabilities, currentBoard) : null;
+
+    setHeatmap(heat);
+    setBotScript("Let’s see our options…");
+    setBotTalking(true);
+
+    setTimeout(() => {
+      setBotScript("I have randomly picked:");
+      setHeatmap(null);
+      revealPendingBotMove();
+    }, 1000);
+  }
+
   useEffect(() => {
     const player = Math.random() < 0.5 ? "X" : "O";
     const botStarts = player === "O";
@@ -109,21 +160,32 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setTurn("X");
     setLogs([]);
     setSaved(false);
+    setHeatmap(null);
+
     if (botStarts) {
       (async () => {
         setBusy(true);
         const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
-        console.log(res);
         captureFromResponse(res);
+
         const idx = (res && typeof (res as any).moveIndex === "number")
           ? (res as any).moveIndex
           : Math.floor(Math.random() * 9);
+        
+          const probabilities: number[] | undefined =
+          (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+            ? (res as any).moveNumbers
+            : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+              ? (res as any).moveNumbers
+              : undefined;
 
         setPendingBotIdx(idx);
-        const situation: "start" | "block" | "win" | "random" =
-          isWinningMove(Array(9).fill(null), idx, "X") ? "win" : "start";
-        setBotScript(buildBotSpeech(Array(9).fill(null), idx, "X", situation));
-        setBotTalking(true);
+
+        // const situation: "start" | "block" | "win" | "random" =
+        //   isWinningMove(Array(9).fill(null), idx, "X") ? "win" : "start";
+        // setBotScript(buildBotSpeech(Array(9).fill(null), idx, "X", situation));
+        // setBotTalking(true);
+        previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
       })().catch(() => {
         const idx = Math.floor(Math.random() * 9);
         setPendingBotIdx(idx);
@@ -185,17 +247,26 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setBusy(true);
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
     captureFromResponse(res);
+
     const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : next.findIndex(c => c === null);
-    console.log(res);
+
+    const probabilities: number[] | undefined =
+      (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+        ? (res as any).moveNumbers
+        : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+          ? (res as any).moveNumbers
+          : undefined;
+
     if (idx >= 0) {
       setPendingBotIdx(idx);
-      const situation: "start" | "block" | "win" | "random" =
-        isWinningMove(next, idx, botSymbol) ? "win"
-        : isBlockingMove(next, idx, botSymbol) ? "block"
-        : "random";
+      // const situation: "start" | "block" | "win" | "random" =
+      //   isWinningMove(next, idx, botSymbol) ? "win"
+      //   : isBlockingMove(next, idx, botSymbol) ? "block"
+      //   : "random";
 
-      setBotScript(buildBotSpeech(next, idx, botSymbol, situation));
-      setBotTalking(true);
+      // setBotScript(buildBotSpeech(next, idx, botSymbol, situation));
+      // setBotTalking(true);
+      previewOptionsThenPick(probabilities, idx, next, botSymbol);
     } else {
       setBusy(false);
       setTurn(playerSymbol);
@@ -208,18 +279,30 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setStatus(t("bot.new"));
     setLogs([]);
     setSaved(false);
+    setHeatmap(null);
     const player = Math.random() < 0.5 ? "X" : "O";
     const botStarts = player === "O";
     setPlayerSymbol(player);
     setTurn("X");
+
     if (botStarts) {
       setBusy(true);
       requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
         .then(res => {
           captureFromResponse(res);
           const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : Math.floor(Math.random()*9);
-          setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
-          setTurn("O");
+
+          const probabilities: number[] | undefined =
+            (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+              ? (res as any).moveNumbers
+              : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+                ? (res as any).moveNumbers
+                : undefined;
+
+          // setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
+          // setTurn("O");
+          setPendingBotIdx(idx);
+          previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
         })
         .finally(() => setBusy(false));
     }
