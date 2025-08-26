@@ -29,8 +29,9 @@ export const labels = {
         winner: "Winner: ",
         joinX: "Join as X",
         joinO: "Join as O",
-        again: "Play again"
-      },
+        again: "Play again",
+        options: "Let's see our options...",
+        rand: "I have randomly picked: "
       bot: {
         open: "open spot",
         open1: "",
@@ -91,7 +92,9 @@ export const labels = {
         winner: "Pobjednik: ",
         joinX: "Poveži se kao X",
         joinO: "Poveži se kao O",
-        again: "Igraj ponovo"
+        again: "Igraj ponovo",
+        options: "Pogledajmo moguće poteze...",
+        rand: "Nasumično sam odabrao: "
       },
       bot: {
         open: "",

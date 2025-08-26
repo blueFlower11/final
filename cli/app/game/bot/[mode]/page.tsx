@@ -140,11 +140,12 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     const heat = probabilities ? probsToHeatmap(probabilities, currentBoard) : null;
 
     setHeatmap(heat);
-    setBotScript("Let’s see our options…");
+    setBotScript(t("game.options"));
     setBotTalking(true);
 
     setTimeout(() => {
-      setBotScript("I have randomly picked:");
+      setBotScript(t("game.rand"));
+      setBotTalking(true);
       setHeatmap(null);
       revealPendingBotMove();
     }, 3000);
@@ -181,10 +182,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
         setPendingBotIdx(idx);
 
-        // const situation: "start" | "block" | "win" | "random" =
-        //   isWinningMove(Array(9).fill(null), idx, "X") ? "win" : "start";
-        // setBotScript(buildBotSpeech(Array(9).fill(null), idx, "X", situation));
-        // setBotTalking(true);
         previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
       })().catch(() => {
         const idx = Math.floor(Math.random() * 9);
@@ -259,13 +256,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
     if (idx >= 0) {
       setPendingBotIdx(idx);
-      // const situation: "start" | "block" | "win" | "random" =
-      //   isWinningMove(next, idx, botSymbol) ? "win"
-      //   : isBlockingMove(next, idx, botSymbol) ? "block"
-      //   : "random";
-
-      // setBotScript(buildBotSpeech(next, idx, botSymbol, situation));
-      // setBotTalking(true);
       previewOptionsThenPick(probabilities, idx, next, botSymbol);
     } else {
       setBusy(false);
@@ -299,8 +289,6 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
                 ? (res as any).moveNumbers
                 : undefined;
 
-          // setBoard(prev => prev.map((c, i) => i === idx ? "X" : c));
-          // setTurn("O");
           setPendingBotIdx(idx);
           previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
         })
