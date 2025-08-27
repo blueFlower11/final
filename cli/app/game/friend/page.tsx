@@ -531,7 +531,7 @@ export default function FriendGame() {
           </div>
         </div>
 
-        <Board
+        <BoardFriend
           board={board}
           onClick={(i) => {
             if (winner || draw) return;
