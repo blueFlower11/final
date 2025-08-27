@@ -441,10 +441,13 @@ export default function FriendGame() {
       setWinner(payload.winner ?? null);
       setDraw(!!payload.draw);
     };
+    const onConnectError = () => setConnected(false);
 
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     socket.on("state", onState);
+    socket.on("connect_error", onConnectError);
+    socket.on("error", onConnectError);
 
     socket.emit("join", { room, role });
 
@@ -452,6 +455,8 @@ export default function FriendGame() {
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
       socket.off("state", onState);
+      socket.off("connect_error", onConnectError);
+      socket.off("error", onConnectError);
     };
   }, [room, role]);
 
@@ -477,7 +482,7 @@ export default function FriendGame() {
     socketRef.current?.emit("move", { room, index: i, symbol: role });
   }
 
-  const onCellPress = (i: number) => doMove(i);
+  // const onCellPress = (i: number) => doMove(i);
 
   const joinUrlFor = (as: "X" | "O") => {
     if (!currentUrl || !room) return "";
@@ -533,21 +538,8 @@ export default function FriendGame() {
 
         <BoardFriend
           board={board}
-          onClick={(i) => {
-            if (winner || draw) return;
-            if (board[i]) return;
-            if ((role === "X" && turn !== "X") || (role === "O" && turn !== "O")) return;
-            if (role === "spectator") return;
-            socketRef.current?.emit("move", { room, index: i, symbol: role });
-          }}
-          disabled={
-            role === "spectator" ||
-            (role === "X" && turn !== "X") ||
-            (role === "O" && turn !== "O") ||
-            !!winner ||
-            draw ||
-            !connected
-          }
+          onClick={(i) => doMove(i)}
+          disabled={disabled}
         />
 
         {disabled && disabledReason && (
