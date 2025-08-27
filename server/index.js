@@ -326,37 +326,6 @@ app.get('/ping', async(req, res) => {
   });
 });
 
-// io.on("connection", (socket) => {
-//   console.log("User connected:", socket.id);
-
-//   socket.on("joinGame", (gameId) => {
-//     socket.join(gameId);
-//     if (!games[gameId]) {
-//       games[gameId] = { id: gameId, board: Array(9).fill(null), players: [], winner: null };
-//     }
-//     if (games[gameId].players.length < 2 && !games[gameId].players.includes(socket.id)) {
-//       games[gameId].players.push(socket.id);
-//     }
-//   });
-
-//   socket.on("makeMove", ({ gameId, index, player }) => {
-//     const game = games[gameId];
-//     if (!game || game.board[index] || game.winner) return;
-//     game.board[index] = player;
-
-//     const winner = checkWinner(game.board);
-//     if (winner) {
-//       game.winner = winner;
-//     }
-
-//     io.to(gameId).emit("moveMade", { index, player, board: game.board, winner: game.winner });
-//   });
-
-//   socket.on("disconnect", () => {
-//     console.log("User disconnected:", socket.id);
-//   });
-// });
-
 function checkWinner(squares) {
   const lines = [
     [0, 1, 2],
