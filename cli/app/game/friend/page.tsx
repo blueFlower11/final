@@ -370,7 +370,7 @@
 
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Board, type Cell } from "@/components/Board";
 import { getSocket } from "@/lib/socket";
 import { QRBlock } from "@/components/QRBlock";
@@ -396,7 +396,7 @@ export default function FriendGame() {
 
   const socketRef = useRef<any>(null);
 
-  // Initialize room/role purely from URL (no UA sniffing)
+  // Initialize room/role from URL only
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -413,7 +413,6 @@ export default function FriendGame() {
     if (qRole === "X" || qRole === "O") {
       initialRole = qRole;
     } else {
-      // Keep spectator by default if no ?as provided
       qs.set("as", "spectator");
     }
     setRole(initialRole);
@@ -425,7 +424,7 @@ export default function FriendGame() {
     setCurrentUrl(url.toString());
   }, []);
 
-  // Socket wiring — join after room & role are finalized
+  // Socket wiring — join after room & role are set
   useEffect(() => {
     if (!room || !role) return;
     const socket = getSocket();
@@ -458,12 +457,29 @@ export default function FriendGame() {
     };
   }, [room, role]);
 
+  // Allow changing role from the UI (re-join)
+  const changeRole = useCallback((next: "X" | "O" | "spectator") => {
+    setRole(next);
+    // Update URL for shareability/stability
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("as", next);
+      window.history.replaceState({}, "", url.toString());
+      setCurrentUrl(url.toString());
+    }
+    socketRef.current?.emit("join", { room, role: next });
+  }, [room]);
+
   function doMove(i: number) {
     if (winner || draw) return;
     if (board[i]) return;
     if ((role === "X" && turn !== "X") || (role === "O" && turn !== "O")) return;
+    if (role === "spectator") return;
     socketRef.current?.emit("move", { room, index: i, symbol: role });
   }
+
+  // Provide both click and touch-start for resilience on some in-app browsers
+  const onCellPress = (i: number) => doMove(i);
 
   const joinUrlFor = (as: "X" | "O") => {
     if (!currentUrl || !room) return "";
@@ -478,49 +494,90 @@ export default function FriendGame() {
   const isSpectator = role === "spectator";
   const otherRole = role === "X" ? "O" : role === "O" ? "X" : "X";
 
+  // Compute disabled + human-readable reason
+  const disabled =
+    isSpectator ||
+    (role === "X" && turn !== "X") ||
+    (role === "O" && turn !== "O") ||
+    !!winner ||
+    draw ||
+    !connected;
+
+  let disabledReason: string | null = null;
+  if (!connected) disabledReason = t("game.server") ?? "Not connected to server.";
+  else if (isSpectator) disabledReason = t("game.spectator") ?? "Spectator—can’t play.";
+  else if (winner) disabledReason = `${t("game.winner") ?? "Winner:"} ${winner}`;
+  else if (draw) disabledReason = t("game.draw") ?? "Draw.";
+  else if (role !== turn) disabledReason = (t("game.waitTurn") ?? `It’s ${turn}’s turn.`);
+
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="max-w-md mx-auto flex flex-col items-center gap-4">
-        <Board
-          board={board}
-          onClick={doMove}
-          disabled={
-            isSpectator ||
-            (role === "X" && turn !== "X") ||
-            (role === "O" && turn !== "O") ||
-            !!winner ||
-            draw
-          }
-        />
 
-        <div className="text-center">
-          <div className="font-semibold">
-            {isSpectator ? t("game.spectator") : `${t("game.role")} ${role}`}
-          </div>
-          <div className="text-sm text-gray-600 mt-1">
-            {t("game.turn")}<b>{turn}</b>
-          </div>
-
-          {/* Helpful turn hint when board is disabled due to turn */}
-          {!isSpectator &&
-            !winner &&
-            !draw &&
-            role !== turn && (
-              <div className="text-xs text-gray-500 mt-1">
-                {t("game.waitTurn") ?? `It’s ${turn}’s turn.`}
-              </div>
-            )}
-
-          {winner && (
-            <div className="mt-1">
-              {t("game.winner")}<b>{winner}</b>
+        {/* Status header */}
+        <div className="w-full p-3 rounded-xl border flex justify-between items-center"
+             style={{ borderColor: connected ? "#E5E7EB" : "#FCA5A5", background: connected ? "white" : "#FEF2F2" }}>
+          <div className="text-sm">
+            <div className="font-semibold">
+              {isSpectator ? t("game.spectator") : `${t("game.role")} ${role}`}
             </div>
-          )}
-          {draw && !winner && <div className="mt-1">{t("game.draw")}</div>}
+            <div className="text-gray-600">
+              {t("game.turn")}<b>{turn}</b>
+            </div>
+          </div>
+          <div className={`text-xs ${connected ? "text-green-600" : "text-red-700"}`}>
+            {connected ? (t("game.connected") ?? "Connected") : (t("game.disconnected") ?? "Disconnected")}
+          </div>
         </div>
 
-        {/* Share QR for the *other* role when you’re a player */}
-        {!isSpectator && (
+        {/* Board */}
+        <Board
+          board={board}
+          onClick={onCellPress}
+          onTouchStartCapture={(e: any) => {
+            // If your Board forwards this prop to cells, this adds a touch fallback.
+            // If it doesn't, you can add the same logic *inside* Board for each cell.
+          }}
+          disabled={disabled}
+        />
+
+        {/* Explain *why* taps are ignored */}
+        {disabled && disabledReason && (
+          <div className="w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3">
+            {disabledReason}
+            {!connected && (
+              <div className="text-xs text-gray-600 mt-1">
+                {t("game.openExternal") ??
+                  "If you opened this from a QR, open in your default browser (Safari/Chrome)."}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Quick role controls on device */}
+        <div className="w-full flex gap-2">
+          <button
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm ${role==="X" ? "bg-black text-white" : "bg-white"}`}
+            onClick={() => changeRole("X")}
+          >
+            {t("game.claimX") ?? "Claim X"}
+          </button>
+          <button
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm ${role==="O" ? "bg-black text-white" : "bg-white"}`}
+            onClick={() => changeRole("O")}
+          >
+            {t("game.claimO") ?? "Claim O"}
+          </button>
+          <button
+            className={`flex-1 rounded-lg border px-3 py-2 text-sm ${role==="spectator" ? "bg-black text-white" : "bg-white"}`}
+            onClick={() => changeRole("spectator")}
+          >
+            {t("game.beSpectator") ?? "Spectate"}
+          </button>
+        </div>
+
+        {/* Share blocks */}
+        {role !== "spectator" ? (
           <div className="w-full p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
             <div className="font-semibold">{t("game.connect")}</div>
             <div className="text-sm text-gray-600">
@@ -534,10 +591,7 @@ export default function FriendGame() {
             </div>
             <div className="text-xs text-gray-500 mt-3">{t("game.phones")}</div>
           </div>
-        )}
-
-        {/* If you’re a spectator (default when no ?as), show join QR for both roles */}
-        {isSpectator && (
+        ) : (
           <div className="w-full grid sm:grid-cols-2 gap-4">
             <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
               <div className="font-semibold">{t("game.joinX")}</div>
@@ -560,21 +614,17 @@ export default function FriendGame() {
           </div>
         )}
 
-        {/* Clearer connection banner (useful for in-app browsers that break WS) */}
-        {!connected && (
-          <div className="w-full text-sm text-red-700 bg-red-50 border border-red-200 rounded-md p-3">
-            {t("game.server")}
-            <div className="text-xs text-red-600 mt-1">
-              {t("game.openExternal") ??
-                "If you opened this from a QR, try opening in your default browser (Safari/Chrome)."}
-            </div>
-          </div>
-        )}
-
         <Link href="/game" className="text-sm text-gray-500 hover:underline mt-2">
           {`← ${t("game.back")}`}
         </Link>
+
+        {/* Tiny debug readout you can keep or remove */}
+        <pre className="w-full text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded p-2 overflow-auto">
+{`room=${room} role=${role} turn=${turn} connected=${connected}
+winner=${winner ?? "null"} draw=${draw} disabled=${disabled}`}
+        </pre>
       </div>
     </main>
   );
 }
+
