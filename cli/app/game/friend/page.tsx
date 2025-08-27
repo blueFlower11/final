@@ -371,7 +371,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Board, type Cell } from "@/components/Board";
+import { BoardFriend, type Cell } from "@/components/BoardFriend";
 import { getSocket } from "@/lib/socket";
 import { QRBlock } from "@/components/QRBlock";
 import Link from "next/link";
@@ -396,7 +396,6 @@ export default function FriendGame() {
 
   const socketRef = useRef<any>(null);
 
-  // Initialize room/role from URL only
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -424,7 +423,6 @@ export default function FriendGame() {
     setCurrentUrl(url.toString());
   }, []);
 
-  // Socket wiring — join after room & role are set
   useEffect(() => {
     if (!room || !role) return;
     const socket = getSocket();
@@ -457,11 +455,9 @@ export default function FriendGame() {
     };
   }, [room, role]);
 
-  // Allow changing role from the UI (re-join)
   const changeRole = useCallback(
     (next: "X" | "O" | "spectator") => {
       setRole(next);
-      // Update URL for shareability/stability
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
         url.searchParams.set("as", next);
@@ -496,7 +492,6 @@ export default function FriendGame() {
   const isSpectator = role === "spectator";
   const otherRole = role === "X" ? "O" : role === "O" ? "X" : "X";
 
-  // Compute disabled + human-readable reason
   const disabled =
     isSpectator ||
     (role === "X" && turn !== "X") ||
@@ -515,7 +510,6 @@ export default function FriendGame() {
   return (
     <main className="min-h-screen px-6 py-8">
       <div className="max-w-md mx-auto flex flex-col items-center gap-4">
-        {/* Status header */}
         <div
           className="w-full p-3 rounded-xl border flex justify-between items-center"
           style={{
@@ -537,10 +531,25 @@ export default function FriendGame() {
           </div>
         </div>
 
-        {/* Board */}
-        <Board board={board} onClick={onCellPress} disabled={disabled} />
+        <Board
+          board={board}
+          onClick={(i) => {
+            if (winner || draw) return;
+            if (board[i]) return;
+            if ((role === "X" && turn !== "X") || (role === "O" && turn !== "O")) return;
+            if (role === "spectator") return;
+            socketRef.current?.emit("move", { room, index: i, symbol: role });
+          }}
+          disabled={
+            role === "spectator" ||
+            (role === "X" && turn !== "X") ||
+            (role === "O" && turn !== "O") ||
+            !!winner ||
+            draw ||
+            !connected
+          }
+        />
 
-        {/* Explain *why* taps are ignored */}
         {disabled && disabledReason && (
           <div className="w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3">
             {disabledReason}
@@ -553,7 +562,6 @@ export default function FriendGame() {
           </div>
         )}
 
-        {/* Quick role controls on device */}
         <div className="w-full flex gap-2">
           <button
             className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
@@ -581,7 +589,6 @@ export default function FriendGame() {
           </button>
         </div>
 
-        {/* Share blocks */}
         {role !== "spectator" ? (
           <div className="w-full p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
             <div className="font-semibold">{t("game.connect")}</div>
@@ -626,7 +633,6 @@ export default function FriendGame() {
           {`← ${t("game.back")}`}
         </Link>
 
-        {/* Tiny debug readout you can keep or remove */}
         <pre className="w-full text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded p-2 overflow-auto">
 {`room=${room} role=${role} turn=${turn} connected=${connected}
 winner=${winner ?? "null"} draw=${draw} disabled=${disabled}`}
