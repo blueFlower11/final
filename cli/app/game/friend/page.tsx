@@ -141,9 +141,8 @@ export default function FriendGame() {
   else if (role !== turn) disabledReason = t("game.waitTurn") ?? `It’s ${turn}’s turn.`;
 
   return (
-    <main className="min-h-screen px-6 py-8">
-      <div className="max-w-5xl mx-auto flex flex-col items-stretch gap-6">
-        {/* Status header */}
+    <main className="min-h-screen px-6 py-8 flex items-center justify-center">
+      <div className="max-w-5xl mx-auto flex flex-col items-center gap-6">
         <div
           className="w-full p-3 rounded-xl border flex justify-between items-center"
           style={{
@@ -165,7 +164,7 @@ export default function FriendGame() {
           </div>
         </div>
 
-        <div className="w-full grid md:grid-cols-2 gap-6 items-start">
+        <div className="w-full grid md:grid-cols-2 gap-10 place-items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <BoardFriend
               board={board}
@@ -213,21 +212,21 @@ export default function FriendGame() {
             </div> */}
           </div>
 
-          <div className="w-full">
+          <div className="w-full max-w-xl mx-auto">
             {role !== "spectator" ? (
               <div className="w-full p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-                <div className="font-semibold">{t("game.connect")}</div>
-                <div className="text-sm text-gray-600">
+                <div className="font-semibold text-center md:text-left">{t("game.connect")}</div>
+                <div className="text-sm text-gray-600 text-center md:text-left">
                   {t("game.scan")}
                   <b>{room || "…"}</b>
                 </div>
-                <div className="mt-4">
+                <div className="mt-4 flex justify-center md:justify-start">
                   <QRBlock
                     label={`${t("game.share")} ${otherRole}`}
                     url={otherRole === "X" ? joinUrlX : joinUrlO}
                   />
                 </div>
-                <div className="text-xs text-gray-500 mt-3">{t("game.phones")}</div>
+                <div className="text-xs text-gray-500 mt-3 text-center md:text-left">{t("game.phones")}</div>
               </div>
             ) : (
               <div className="w-full grid sm:grid-cols-2 gap-4">
