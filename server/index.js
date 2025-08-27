@@ -13,21 +13,24 @@ const {
   wrapWithPipes,
   unwrapPipes,
 } = require('./boards');
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
     process.env.CLIENT_URL,
+    "http://localhost:3000",
     "http://localhost:5173"
-];
+].filter(Boolean);
 
 const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
-    credentials: true,
+    credentials: flase,
   },
+  path: "/socket.io", 
 });
 
 app.use(express.json());
@@ -323,36 +326,36 @@ app.get('/ping', async(req, res) => {
   });
 });
 
-io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
+// io.on("connection", (socket) => {
+//   console.log("User connected:", socket.id);
 
-  socket.on("joinGame", (gameId) => {
-    socket.join(gameId);
-    if (!games[gameId]) {
-      games[gameId] = { id: gameId, board: Array(9).fill(null), players: [], winner: null };
-    }
-    if (games[gameId].players.length < 2 && !games[gameId].players.includes(socket.id)) {
-      games[gameId].players.push(socket.id);
-    }
-  });
+//   socket.on("joinGame", (gameId) => {
+//     socket.join(gameId);
+//     if (!games[gameId]) {
+//       games[gameId] = { id: gameId, board: Array(9).fill(null), players: [], winner: null };
+//     }
+//     if (games[gameId].players.length < 2 && !games[gameId].players.includes(socket.id)) {
+//       games[gameId].players.push(socket.id);
+//     }
+//   });
 
-  socket.on("makeMove", ({ gameId, index, player }) => {
-    const game = games[gameId];
-    if (!game || game.board[index] || game.winner) return;
-    game.board[index] = player;
+//   socket.on("makeMove", ({ gameId, index, player }) => {
+//     const game = games[gameId];
+//     if (!game || game.board[index] || game.winner) return;
+//     game.board[index] = player;
 
-    const winner = checkWinner(game.board);
-    if (winner) {
-      game.winner = winner;
-    }
+//     const winner = checkWinner(game.board);
+//     if (winner) {
+//       game.winner = winner;
+//     }
 
-    io.to(gameId).emit("moveMade", { index, player, board: game.board, winner: game.winner });
-  });
+//     io.to(gameId).emit("moveMade", { index, player, board: game.board, winner: game.winner });
+//   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected:", socket.id);
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected:", socket.id);
+//   });
+// });
 
 function checkWinner(squares) {
   const lines = [
@@ -372,6 +375,91 @@ function checkWinner(squares) {
   }
   return null;
 }
+
+const isDraw = (b) => b.every(x => x === "X" || x === "O");
+
+const rooms = Object.create(null);
+
+function ensureRoom(room) {
+  if (!rooms[room]) {
+    rooms[room] = {
+      board: Array(9).fill(null),
+      turn: "X",
+      winner: null,
+      draw: false,
+      roles: { X: null, O: null },
+      spectators: new Set(),
+    };
+  }
+  return rooms[room];
+}
+
+function emitState(room) {
+  const r = rooms[room];
+  if (!r) return;
+  io.to(room).emit("state", {
+    board: r.board,
+    turn: r.turn,
+    winner: r.winner,
+    draw: r.draw,
+  });
+}
+
+io.on("connection", (socket) => {
+  socket.on("join", ({ room, role }) => {
+    if (typeof room !== "string" || !room) return;
+    socket.join(room);
+    const r = ensureRoom(room);
+
+    if (role === "X" || role === "O") {
+      if (!r.roles[role] || r.roles[role] === socket.id) {
+        r.roles[role] = socket.id;
+        r.spectators.delete(socket.id);
+      } else {
+        r.spectators.add(socket.id);
+      }
+    } else {
+      r.spectators.add(socket.id);
+    }
+
+    emitState(room);
+  });
+
+  socket.on("move", ({ room, index, symbol }) => {
+    const r = rooms[room];
+    if (!r) return;
+
+    if (r.winner || r.draw) return;
+    if (symbol !== "X" && symbol !== "O") return;
+    if (index < 0 || index > 8 || r.board[index]) return;
+
+    if (r.turn !== symbol) return;
+
+    if (r.roles[symbol] !== socket.id) return;
+
+    r.board[index] = symbol;
+
+    const w = checkWinner(r.board);
+    if (w) {
+      r.winner = w;
+    } else if (isDraw(r.board)) {
+      r.draw = true;
+    } else {
+      r.turn = r.turn === "X" ? "O" : "X";
+    }
+
+    emitState(room);
+  });
+
+  socket.on("disconnect", () => {
+    for (const [roomId, r] of Object.entries(rooms)) {
+      if (r.roles.X === socket.id) r.roles.X = null;
+      if (r.roles.O === socket.id) r.roles.O = null;
+      if (r.spectators.has(socket.id)) r.spectators.delete(socket.id);
+    }
+    console.log("socket disconnected:", socket.id);
+  });
+});
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
