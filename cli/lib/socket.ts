@@ -16,7 +16,7 @@
 import { io, Socket } from 'socket.io-client';
 import { API_BASE } from './config';
 
-let socket: Socket | null = null;
+let socket: Socket | undefined;
 
 export function getSocket(): Socket {
   if (!socket) {
@@ -31,7 +31,7 @@ export function getSocket(): Socket {
     });
 
     // Optional debug logging
-    socket.on('connect', () => console.log('[socket] connected', socket.id));
+    socket.on('connect', () => console.log('[socket] connected', socket!.id));
     socket.on('connect_error', (e) => console.warn('[socket] connect_error', e.message || e));
     socket.on('error', (e) => console.warn('[socket] error', e));
     socket.on('disconnect', (r) => console.log('[socket] disconnected', r));
