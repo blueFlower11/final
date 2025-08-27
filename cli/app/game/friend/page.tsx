@@ -142,7 +142,8 @@ export default function FriendGame() {
 
   return (
     <main className="min-h-screen px-6 py-8">
-      <div className="max-w-md mx-auto flex flex-col items-center gap-4">
+      <div className="max-w-5xl mx-auto flex flex-col items-stretch gap-6">
+        {/* Status header */}
         <div
           className="w-full p-3 rounded-xl border flex justify-between items-center"
           style={{
@@ -164,90 +165,96 @@ export default function FriendGame() {
           </div>
         </div>
 
-        <BoardFriend
-          board={board}
-          onClick={(i) => doMove(i)}
-          disabled={disabled}
-        />
+        <div className="w-full grid md:grid-cols-2 gap-6 items-start">
+          <div className="flex flex-col items-center gap-4">
+            <BoardFriend
+              board={board}
+              onClick={(i) => doMove(i)}
+              disabled={disabled}
+            />
 
-        {/* {disabled && disabledReason && (
-          <div className="w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3">
-            {disabledReason}
-            {!connected && (
-              <div className="text-xs text-gray-600 mt-1">
-                {t("game.openExternal") ??
-                  "If you opened this from a QR, open in your default browser (Safari/Chrome)."}
+            {/* {disabled && disabledReason && (
+              <div className="w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md p-3">
+                {disabledReason}
+                {!connected && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    {t("game.openExternal") ??
+                      "If you opened this from a QR, open in your default browser (Safari/Chrome)."}
+                  </div>
+                )}
+              </div>
+            )} */}
+
+            {/* <div className="w-full flex gap-2">
+              <button
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                  role === "X" ? "bg-black text-white" : "bg-white"
+                }`}
+                onClick={() => changeRole("X")}
+              >
+                {t("game.claimX") ?? "Claim X"}
+              </button>
+              <button
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                  role === "O" ? "bg-black text-white" : "bg-white"
+                }`}
+                onClick={() => changeRole("O")}
+              >
+                {t("game.claimO") ?? "Claim O"}
+              </button>
+              <button
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
+                  role === "spectator" ? "bg-black text-white" : "bg-white"
+                }`}
+                onClick={() => changeRole("spectator")}
+              >
+                {t("game.beSpectator") ?? "Spectate"}
+              </button>
+            </div> */}
+          </div>
+
+          <div className="w-full">
+            {role !== "spectator" ? (
+              <div className="w-full p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
+                <div className="font-semibold">{t("game.connect")}</div>
+                <div className="text-sm text-gray-600">
+                  {t("game.scan")}
+                  <b>{room || "…"}</b>
+                </div>
+                <div className="mt-4">
+                  <QRBlock
+                    label={`${t("game.share")} ${otherRole}`}
+                    url={otherRole === "X" ? joinUrlX : joinUrlO}
+                  />
+                </div>
+                <div className="text-xs text-gray-500 mt-3">{t("game.phones")}</div>
+              </div>
+            ) : (
+              <div className="w-full grid sm:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
+                  <div className="font-semibold">{t("game.joinX")}</div>
+                  <div className="text-sm text-gray-600">
+                    {t("game.scan")}
+                    <b>{room || "…"}</b>
+                  </div>
+                  <div className="mt-3">
+                    <QRBlock label={t("game.joinX")} url={joinUrlX} />
+                  </div>
+                </div>
+                <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
+                  <div className="font-semibold">{t("game.joinO")}</div>
+                  <div className="text-sm text-gray-600">
+                    {t("game.scan")}
+                    <b>{room || "…"}</b>
+                  </div>
+                  <div className="mt-3">
+                    <QRBlock label={t("game.joinO")} url={joinUrlO} />
+                  </div>
+                </div>
               </div>
             )}
           </div>
-        )} */}
-
-        {/* <div className="w-full flex gap-2">
-          <button
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
-              role === "X" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => changeRole("X")}
-          >
-            {t("game.claimX") ?? "Claim X"}
-          </button>
-          <button
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
-              role === "O" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => changeRole("O")}
-          >
-            {t("game.claimO") ?? "Claim O"}
-          </button>
-          <button
-            className={`flex-1 rounded-lg border px-3 py-2 text-sm ${
-              role === "spectator" ? "bg-black text-white" : "bg-white"
-            }`}
-            onClick={() => changeRole("spectator")}
-          >
-            {t("game.beSpectator") ?? "Spectate"}
-          </button>
-        </div> */}
-
-        {role !== "spectator" ? (
-          <div className="w-full p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-            <div className="font-semibold">{t("game.connect")}</div>
-            <div className="text-sm text-gray-600">
-              {t("game.scan")}
-              <b>{room || "…"}</b>
-            </div>
-            <div className="mt-4">
-              <QRBlock
-                label={`${t("game.share")} ${otherRole}`}
-                url={otherRole === "X" ? joinUrlX : joinUrlO}
-              />
-            </div>
-            <div className="text-xs text-gray-500 mt-3">{t("game.phones")}</div>
-          </div>
-        ) : (
-          <div className="w-full grid sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-              <div className="font-semibold">{t("game.joinX")}</div>
-              <div className="text-sm text-gray-600">
-                {t("game.scan")}
-                <b>{room || "…"}</b>
-              </div>
-              <div className="mt-3">
-                <QRBlock label={t("game.joinX")} url={joinUrlX} />
-              </div>
-            </div>
-            <div className="p-4 rounded-2xl bg-white border border-gray-200 shadow-sm">
-              <div className="font-semibold">{t("game.joinO")}</div>
-              <div className="text-sm text-gray-600">
-                {t("game.scan")}
-                <b>{room || "…"}</b>
-              </div>
-              <div className="mt-3">
-                <QRBlock label={t("game.joinO")} url={joinUrlO} />
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
 
         <Link href="/game" className="text-sm text-gray-500 hover:underline mt-2">
           {`← ${t("game.back")}`}
