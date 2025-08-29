@@ -4,7 +4,7 @@ import { LanguageProvider } from "@/lib/lang/LanguageContext";
 import LanguageToggle from "@/components/LanguageToggle";
 
 export const metadata: Metadata = {
-  title: "Tic-Tac-Toe RL",
+  title: "Tic-Tac-Toe Reinforcement Learning Game App",
   description: "Play with a friend or two kinds of bots — one that learns!",
 };
 

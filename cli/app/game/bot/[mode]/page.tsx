@@ -168,7 +168,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
     setTimeout(() => {
       // setBotScript(t("game.rand"));
-      // setBotTalking(true);
+      setBotTalking(false);
       setHeatmap(null);
       revealPendingBotMove();
     }, 6000);
