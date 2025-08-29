@@ -30,7 +30,7 @@ export const labels = {
         joinX: "Join as X",
         joinO: "Join as O",
         again: "Play again",
-        options: "Let's see our options...",
+        options: "Let's see our options... Based on games I have played so far and how often I have won or lost this exact combination of moves: there is higher possibility to choose green positions than red ones, but I'm choosing randomly so I choose:",
         rand: "I have randomly picked: "
       },
       bot: {
@@ -94,7 +94,7 @@ export const labels = {
         joinX: "Poveži se kao X",
         joinO: "Poveži se kao O",
         again: "Igraj ponovo",
-        options: "Pogledajmo moguće poteze...\nNa temelju dosad odigranih igara te koliko puta sam igrajući ovu kombinaciju pobijedio ili izgubio: crvena polja ću manje vjerojatno odigrati, doke zelena više vjerojatno, no moram odabrati potpuno nasumično, tako da biram:",
+        options: "Pogledajmo moguće poteze... Na temelju dosad odigranih igara te koliko puta sam igrajući ovu kombinaciju pobijedio ili izgubio: crvena polja ću manje vjerojatno odigrati, dok zelena više vjerojatno, no moram odabrati potpuno nasumično, tako da biram:",
         rand: "Nasumično sam odabrao: "
       },
       bot: {
