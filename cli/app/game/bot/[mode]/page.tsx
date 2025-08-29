@@ -138,8 +138,27 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     });
   }
 
+  function getSituation(b: Cell[], idx: number | null, who: "X" | "O"): "start" | "block" | "win" | "random" {
+    if (idx == null || idx < 0) return "random";
+    if (countOpen(b) === 9) return "start";
+    if (isWinningMove(b, idx, who)) return "win";
+    if (isBlockingMove(b, idx, who)) return "block";
+    return "random";
+  }
+
   function previewOptionsThenPick(probabilities: number[] | undefined, idx: number, currentBoard: Cell[], who: "X" | "O") {
     if (!Number.isInteger(idx)) return;
+
+    if (params.mode === "static") {
+      const situation = getSituation(currentBoard, idx, who);
+      const speech = buildBotSpeech(currentBoard, idx, who, situation);
+      setBotScript(speech);
+      setBotTalking(true);
+      setTimeout(() => {
+        revealPendingBotMove();
+      }, 1500);
+      return;
+    }
 
     const heat = probabilities ? probsToHeatmap(probabilities, currentBoard) : null;
 
@@ -195,7 +214,7 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
         setBusy(true);
       });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhausti, mode: "smart" | "stupid"ve-deps
   }, [params.mode]);
 
   const outcome = useMemo(() => checkWinner(board), [board]);
