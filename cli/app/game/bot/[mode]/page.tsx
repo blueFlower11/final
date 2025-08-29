@@ -101,6 +101,10 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
   }
 
   function probsToHeatmap(probabilities: number[], b: Cell[]) {
+    if (params.mode === "static") {
+      return b.map(c => (c ? null : "white"));
+    }
+
     const empties = probabilities
       .map((p, i) => (b[i] ? null : p))
       .filter((v): v is number => v != null);

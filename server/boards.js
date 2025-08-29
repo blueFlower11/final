@@ -4,7 +4,7 @@ const R180= [8,7,6,5,4,3,2,1,0];                 // rotate 180°
 const R270= [2,5,8,1,4,7,0,3,6];                 // rotate 270° CW
 const FH  = [2,1,0,5,4,3,8,7,6];                 // flip horizontal (mirror over vertical axis)
 const FV  = [6,7,8,3,4,5,0,1,2];                 // flip vertical (mirror over horizontal axis)
-const FD  = [0,3,6,1,4,7,2,5,8];                 // flip main diagonal? (row/col swap from top-left to bottom-right)
+const FD  = [0,3,6,1,4,7,2,5,8];                 // flip main diagonal
 const FA  = [8,5,2,7,4,1,6,3,0];                 // flip anti-diagonal
 
 const TRANSFORMS = [
