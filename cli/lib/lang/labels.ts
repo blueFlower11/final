@@ -94,7 +94,7 @@ export const labels = {
         joinX: "Poveži se kao X",
         joinO: "Poveži se kao O",
         again: "Igraj ponovo",
-        options: "Pogledajmo moguće poteze...",
+        options: "Pogledajmo moguće poteze...\nNa temelju dosad odigranih igara te koliko puta sam igrajući ovu kombinaciju pobijedio ili izgubio: crvena polja ću manje vjerojatno odigrati, doke zelena više vjerojatno, no moram odabrati potpuno nasumično, tako da biram:",
         rand: "Nasumično sam odabrao: "
       },
       bot: {
