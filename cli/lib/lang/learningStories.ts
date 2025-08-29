@@ -26,10 +26,10 @@ export const stories: Story[] = [
     },
     pages: {
       en: [
-        { img: "/images/eng_kids_1.png", title: "Meet Nooks-&-Crooks!", text: "Nooks-&-Crooks is playful robot that is learning by trying. He lives in a magical engine where each choice leads to rewards or surprises." },
-        { img: "/images/eng_kids_2.png", title: "Playing the Game", text: "He explors boxes filled with treats. Every time he picks the right box, he gets a treat! Over time, he learns which boxes are best." },
-        { img: "/images/eng_kids_3.png", title: "Learning by Reward", text: "When he makes a good choice, he gets a lot of treats. A wrong choice doesn't get him any treat. This helps him remember what are the best options he has to do." },
-        { img: "/images/eng_kids_4.png", title: "Becoming Smart!", text: "Soon, he picks the best boxes almost every time. That’s Reinforcement Learning: try, get reward, and try again!" },
+        { img: "/images/eng_kids_1.png", title: "Meet Nooks-&-Crooks!", text: "Nooks-Crooks is a little robot trying to learn to play tic-tac-toe. In order to learn to play tic-tac-toe, he decided to try to reward every good move he makes and punish every bad one. He uses lots of candy to do this. And he wants even more." },
+        { img: "/images/eng_kids_2.png", title: "Playing the Game", text: "To keep track of his every move, he decided to draw a tic-tac-toe board on each box of candy and fill the box with candy for each move he could make. And so he began to learn like a real little student. To learn, he had to play tic-tac-toe many times." },
+        { img: "/images/eng_kids_3.png", title: "Learning by Reward", text: "In order for his friends to learn the game, he decided to make a deal with them: If he wins, then his friends will fill his boxes with the candy he wants for his moves, otherwise he will give the candy drawn from the boxes to his friends." },
+        { img: "/images/eng_kids_4.png", title: "Becoming Smart!", text: "After playing so many times and exchanging candies with his friends, little Nooks-Crooks noticed that only the candies he always won with were left in his boxes, and finally, with a lot of effort, he managed to learn to play tic-tac-toe."},
       ],
       hr: [
         { img: "/images/cro_kids_1.png", title: "Upoznajte Nooks-Crooks!", text: "Nooks-Crooks je maleni robot koji pokušava naučiti igrati križić-kružić. Da bi naučio igrati križić-kružić odlučio je pokušati nagraditi svaki dobar potez koji napravi, a kazniti svaki loši. Za to koristi punooooo bombona. I želi ih još više." },
@@ -52,16 +52,16 @@ export const stories: Story[] = [
     },
     pages: {
       en: [
-        { img: "/images/maze_1.png", title: "First Steps", text: "Our mouse tries corridors at random. Sometimes it finds cheese—reward unlocked!" },
-        { img: "/images/maze_2.png", title: "Remembering Good Turns", text: "Cheesy paths get chosen more often; dead ends get ignored." },
-        { img: "/images/maze_3.png", title: "Exploit or Explore?", text: "Should the mouse try the favorite path or explore new turns? That’s the exploration‑exploitation trade‑off." },
-        { img: "/images/maze_4.png", title: "Fast Finder", text: "With practice, the mouse finds cheese quickly—its ‘policy’ improved!" },
+        { img: "/images/maze_1.png", title: "First Steps", text: "A little mouse is trying to learn his way through the maze to his cheese." },
+        { img: "/images/maze_2.png", title: "Remembering Good Turns", text: "The first time he enters the maze, he doesn't know where his cheese is, so on his way to the cheese he has to take many turns, reach a dead end, and then return. But the more time passes, the hungrier the mouse gets and the faster he wants to get to his cheese." },
+        { img: "/images/maze_3.png", title: "Exploit or Explore?", text: "The next day he has to repeat the journey, but he is still unsure, so he wanders and wanders again. But he doesn't want to wait that long for the cheese, so he decides to remember his way to the cheese as best he can." },
+        { img: "/images/maze_4.png", title: "Fast Finder", text: "So the little mouse memorized and learned every day until in the end he knew how to quickly find his way to the cheese almost without error so that he wouldn't be hungry." },
       ],
       hr: [
-        { img: "/images/maze_1.png", title: "Prvi koraci", text: "Miš nasumično bira hodnike. Katkad nađe sir—nagrada otključana!" },
-        { img: "/images/maze_2.png", title: "Pamti dobre skretanja", text: "Putovi sa sirom biraju se češće; slijepa ulica se izbjegava." },
-        { img: "/images/maze_3.png", title: "Iskoristi ili istraži?", text: "Hoće li miš odabrati provjereni put ili istražiti novi? To je odnos istraživanja i iskorištavanja." },
-        { img: "/images/maze_4.png", title: "Brzi pronalazač", text: "S vježbom miš brzo nađe sir—njegova ‘politika’ je bolja!" },
+        { img: "/images/maze_1.png", title: "Prvi koraci", text: "Maleni mišić pokušava naučiti put kroz labirint do svoga sira." },
+        { img: "/images/maze_2.png", title: "Pamti dobre skretanja", text: "Prvi puta kada uđe u labirint, ne zna gdje je njego sir pa na putu do sira mora puno puta skrenuti, doći do slijepe ulice i vraćati se. No što više vremena prođe miš je sve gladniji i htio bi što prije doći do svoga sira." },
+        { img: "/images/maze_3.png", title: "Iskoristi ili istraži?", text: "Drugoga dana opet mora ponoviti put, ali i daljen nije siguran tako da opet luta i luta. Ali on ne želi toliko dugo čekati na sir tako da je odlučio što bolje može pamtiti svoj put do sira." },
+        { img: "/images/maze_4.png", title: "Brzi pronalazač", text: "Tako je maleni mišić svakoga dana pamtio i učio dok na kraju nije skoro bez pogreške znao vrlo brzo pronači put do sira da ne bude gladan." },
       ],
     },
   },
