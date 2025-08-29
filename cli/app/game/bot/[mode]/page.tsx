@@ -167,11 +167,11 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setBotTalking(true);
 
     setTimeout(() => {
-      setBotScript(t("game.rand"));
+      // setBotScript(t("game.rand"));
       setBotTalking(true);
       setHeatmap(null);
       revealPendingBotMove();
-    }, 3000);
+    }, 6000);
   }
 
   useEffect(() => {
