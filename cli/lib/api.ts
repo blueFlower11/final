@@ -18,7 +18,6 @@ export async function requestBotMove({
   mode: "learning" | "static";
 }): Promise<{ index: number; board?: Board; winner?: "X" | "O" | null; draw?: boolean; } | null> {
   const endpoint = ENDPOINT_MOVE
-  console.log(toPipeBoard(board));
   try {
     const res = await fetch(`${API_BASE}${endpoint}`, {
       method: "POST",
