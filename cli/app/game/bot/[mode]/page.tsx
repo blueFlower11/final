@@ -38,6 +38,13 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
 
   const botSymbol = playerSymbol === "X" ? "O" : "X";
 
+  function randomEmptyIndex(b: Cell[]) {
+    const empties = b.map((v, i) => (v ? -1 : i)).filter(i => i >= 0);
+    if (empties.length === 0) return -1;
+    const r = Math.floor(Math.random() * empties.length);
+    return empties[r];
+  }
+
   function captureFromResponse(res: any) {
     if (!res) return;
     const boardId = (res as any).boardId ?? (res as any).id ?? (res as any).board_id;
@@ -187,32 +194,62 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setHeatmap(null);
 
     if (botStarts) {
-      (async () => {
-        setBusy(true);
-        const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
-        captureFromResponse(res);
+      // (async () => {
+      //   setBusy(true);
+      //   const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
+      //   captureFromResponse(res);
 
-        const idx = (res && typeof (res as any).moveIndex === "number")
-          ? (res as any).moveIndex
-          : Math.floor(Math.random() * 9);
+      //   const idx = (res && typeof (res as any).moveIndex === "number")
+      //     ? (res as any).moveIndex
+      //     : Math.floor(Math.random() * 9);
         
+      //     const probabilities: number[] | undefined =
+      //     (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+      //       ? (res as any).moveNumbers
+      //       : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+      //         ? (res as any).moveNumbers
+      //         : undefined;
+
+      //   setPendingBotIdx(idx);
+
+      //   previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
+      // })().catch(() => {
+      //   const idx = Math.floor(Math.random() * 9);
+      //   setPendingBotIdx(idx);
+      //   setBotScript(t("bot.botStartD"));
+      //   setBotTalking(true);
+      //   setBusy(true);
+      // });
+      if (params.mode === "static") {
+        setBusy(true);
+        const idx = randomEmptyIndex(Array(9).fill(null));
+        setPendingBotIdx(idx);
+        previewOptionsThenPick(undefined, idx, Array(9).fill(null), "X");
+      } else {
+        (async () => {
+          setBusy(true);
+          const res = await requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode });
+          captureFromResponse(res);
+
+          const idx = (res && typeof (res as any).moveIndex === "number")
+            ? (res as any).moveIndex
+            : Math.floor(Math.random() * 9);
+          
           const probabilities: number[] | undefined =
-          (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
-            ? (res as any).moveNumbers
-            : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+            (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
               ? (res as any).moveNumbers
               : undefined;
 
-        setPendingBotIdx(idx);
-
-        previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
-      })().catch(() => {
-        const idx = Math.floor(Math.random() * 9);
-        setPendingBotIdx(idx);
-        setBotScript(t("bot.botStartD"));
-        setBotTalking(true);
-        setBusy(true);
-      });
+          setPendingBotIdx(idx);
+          previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
+        })().catch(() => {
+          const idx = Math.floor(Math.random() * 9);
+          setPendingBotIdx(idx);
+          setBotScript(t("bot.botStartD"));
+          setBotTalking(true);
+          setBusy(true);
+        });
+      }
     }
   // eslint-disable-next-line react-hooks/exhausti, mode: "smart" | "stupid"ve-deps
   }, [params.mode]);
@@ -264,6 +301,19 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     const after = checkWinner(next);
     if (after) return;
 
+    if (params.mode === "static") {
+      setBusy(true);
+      const idx = randomEmptyIndex(next);
+      if (idx >= 0) {
+        setPendingBotIdx(idx);
+        previewOptionsThenPick(undefined, idx, next, botSymbol);
+      } else {
+        setBusy(false);
+        setTurn(playerSymbol);
+      }
+      return;
+    }
+
     setBusy(true);
     const res = await requestBotMove({ board: next, player: botSymbol, mode: params.mode });
     captureFromResponse(res);
@@ -299,23 +349,49 @@ export default function BotGame({ params }: { params: { mode: "learning" | "stat
     setTurn("X");
 
     if (botStarts) {
-      setBusy(true);
-      requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
-        .then(res => {
-          captureFromResponse(res);
-          const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : Math.floor(Math.random()*9);
+      // setBusy(true);
+      // requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
+      //   .then(res => {
+      //     captureFromResponse(res);
+      //     const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : Math.floor(Math.random()*9);
 
-          const probabilities: number[] | undefined =
-            (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
-              ? (res as any).moveNumbers
-              : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+      //     const probabilities: number[] | undefined =
+      //       (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+      //         ? (res as any).moveNumbers
+      //         : (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
+      //           ? (res as any).moveNumbers
+      //           : undefined;
+
+      //     setPendingBotIdx(idx);
+      //     previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
+      //   })
+      //   .finally(() => setBusy(false));
+      if (params.mode === "static") {
+        setBusy(true);
+        const idx = randomEmptyIndex(Array(9).fill(null));
+        setPendingBotIdx(idx);
+        previewOptionsThenPick(undefined, idx, Array(9).fill(null), "X");
+      } else {
+        setBusy(true);
+        requestBotMove({ board: Array(9).fill(null), player: "X", mode: params.mode })
+          .then(res => {
+            captureFromResponse(res);
+            const idx = (res && typeof (res as any).moveIndex === "number") ? (res as any).moveIndex : Math.floor(Math.random()*9);
+
+            const probabilities: number[] | undefined =
+              (Array.isArray((res as any)?.moveNumbers) && (res as any).moveNumbers.length === 9)
                 ? (res as any).moveNumbers
                 : undefined;
 
-          setPendingBotIdx(idx);
-          previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
-        })
-        .finally(() => setBusy(false));
+            setPendingBotIdx(idx);
+            previewOptionsThenPick(probabilities, idx, Array(9).fill(null), "X");
+          })
+          .catch(() => {
+            const idx = Math.floor(Math.random() * 9);
+            setPendingBotIdx(idx);
+            previewOptionsThenPick(undefined, idx, Array(9).fill(null), "X");
+          });
+      }
     }
   }
 
